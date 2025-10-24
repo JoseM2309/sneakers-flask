@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SneakersMX</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<!-- Navbar -->
+<header class="navbar">
+    <a href="{{ url_for('index') }}" class="logo">
+        👟 <span>SneakersMX</span>
+    </a>
+
+    <nav>
+        <ul class="nav-links">
+            <li><a href="{{ url_for('index') }}">Inicio</a></li>
+            <li><a href="{{ url_for('productos') }}">Productos</a></li>
+            <li><a href="{{ url_for('conocenos') }}">Conócenos</a></li>
+            <li><a href="{{ url_for('contacto') }}">Contáctanos</a></li>
+           <li><a href="{{ url_for('carrito') }}">🛒 Carrito</a></li> 
+        </ul>
+    </nav>
+
+    <!-- Menú móvil -->
+    <div class="menu-toggle" id="menu-toggle">
+        <span></span>
+        <span></span>
+        <span></span>
+    </div>
+</header>
+
+<!-- Contenido dinámico -->
+<main>
+    {% block content %}{% endblock %}
+</main>
+
+<!-- Footer -->
+<footer>
+    <p>&copy; 2025 SneakersMX. Todos los derechos reservados.</p>
+</footer>
+
+<!-- Botón flotante de accesibilidad -->
+<div id="accesibilidad-panel" class="accesibilidad-panel">
+    <button id="accesibilidad-toggle" title="Herramientas de accesibilidad">🧑‍🦯</button>
+    <div id="accesibilidad-options" class="accesibilidad-options">
+        <h4>Accesibilidad</h4>
+        <button onclick="toggleGrayscale()">Escala de grises</button>
+        <button onclick="toggleContrast()">Alto contraste</button>
+        <button onclick="increaseText()">Aumentar texto</button>
+        <button onclick="decreaseText()">Disminuir texto</button>
+        <button onclick="changeFont()">Cambiar tipografía</button>
+        <button onclick="increaseCursor()">Cursor grande</button>
+        <button onclick="togglePointer()">Puntero lector</button>
+        <button onclick="toggleNightMode()">Modo nocturno</button>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    // Menú móvil
+    const toggle = document.getElementById('menu-toggle');
+    const navLinks = document.querySelector('.nav-links');
+    toggle.addEventListener('click', () => {
+        toggle.classList.toggle('open');
+        navLinks.classList.toggle('active');
+    });
+
+    // Accesibilidad
+    const toggleBtn = document.getElementById('accesibilidad-toggle');
+    const options = document.getElementById('accesibilidad-options');
+
+    toggleBtn.addEventListener('click', () => {
+        options.classList.toggle('show');
+    });
+
+    // Funciones de accesibilidad
+    window.toggleGrayscale = () => document.body.classList.toggle('grayscale');
+    window.toggleContrast = () => document.body.classList.toggle('high-contrast');
+    window.increaseText = () => {
+        let size = parseFloat(getComputedStyle(document.body).fontSize);
+        document.body.style.fontSize = (size + 2) + 'px';
+    };
+    window.decreaseText = () => {
+        let size = parseFloat(getComputedStyle(document.body).fontSize);
+        document.body.style.fontSize = (size - 2) + 'px';
+    };
+    window.changeFont = () => {
+        document.body.style.fontFamily = document.body.style.fontFamily === 'Courier New, monospace' ? 'Montserrat, sans-serif' : 'Courier New, monospace';
+    };
+    window.increaseCursor = () => document.body.classList.toggle('large-cursor');
+    window.togglePointer = () => document.body.classList.toggle('pointer-reader');
+    window.toggleNightMode = () => document.body.classList.toggle('night-mode');
+
+    // Función simulada carrito
+    window.agregarAlCarrito = (id) => alert("Producto " + id + " agregado al carrito!");
+});
+</script>
+
+</body>
+</html>

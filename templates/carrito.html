@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2 style="text-align:center; margin-top:30px;">🛒 Tu Carrito de Compras</h2>
+
+{% if carrito|length == 0 %}
+    <p style="text-align:center; font-size:18px; margin-top:40px;">
+        Tu carrito está vacío 🛍️
+    </p>
+{% else %}
+    <table style="margin: 30px auto; width:80%; border-collapse: collapse;">
+        <tr style="background-color:#00aa00; color:white;">
+            <th style="padding:10px;">Producto</th>
+            <th style="padding:10px;">Precio (MXN)</th>
+            <th style="padding:10px;">Cantidad</th>
+            <th style="padding:10px;">Acción</th>
+        </tr>
+        {% for item in carrito %}
+        <tr style="border-bottom:1px solid #ddd; text-align:center;">
+            <td style="padding:10px;">{{ item['nombre'] }}</td>
+            <td style="padding:10px;">${{ item['precio'] }}</td>
+            <td style="padding:10px;">{{ item['cantidad'] }}</td>
+            <td style="padding:10px;">
+                <a href="{{ url_for('eliminar_carrito', id=item['id']) }}" 
+                   style="color:red; text-decoration:none;">🗑️ Eliminar</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <div style="text-align:center; margin-top:20px;">
+        <h3>Total: ${{ total }} MXN</h3>
+        <a href="{{ url_for('vaciar_carrito') }}" 
+           style="background-color:red; color:white; padding:10px 20px; text-decoration:none; border-radius:5px;">
+           Vaciar carrito
+        </a>
+        <a href="#" 
+           style="background-color:#00aa00; color:white; padding:10px 20px; text-decoration:none; border-radius:5px; margin-left:10px;">
+           Finalizar compra ✅
+        </a>
+    </div>
+{% endif %}
+{% endblock %}

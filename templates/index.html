@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="hero-carousel">
+    <div class="carousel-container">
+        {% set novedades = [
+            {'imagen': 'novedad1.png', 'titulo': 'Novedad 1', 'descripcion': 'Diseño innovador para correr rápido.'},
+            {'imagen': 'novedad2.png', 'titulo': 'Novedad 2', 'descripcion': 'Comodidad y estilo en cada paso.'},
+            {'imagen': 'novedad3.png', 'titulo': 'Novedad 3', 'descripcion': 'Ligereza y amortiguación superior.'},
+            {'imagen': 'novedad4.png', 'titulo': 'Novedad 4', 'descripcion': 'Perfectos para cualquier ocasión.'}
+        ] %}
+        <div class="carousel-slides">
+            {% for item in novedades %}
+            <div class="slide">
+                <img src="{{ url_for('static', filename='img/' ~ item.imagen) }}" alt="{{ item.titulo }}">
+                <div class="slide-content">
+                    <h2>{{ item.titulo }}</h2>
+                    <p>{{ item.descripcion }}</p>
+                    <a href="{{ url_for('productos') }}" class="btn-hero">Ver Productos</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <button class="prev">&#10094;</button>
+        <button class="next">&#10095;</button>
+    </div>
+</section>
+
+<!-- Script para carrusel -->
+<script>
+let currentSlide = 0;
+const slides = document.querySelectorAll('.slide');
+const totalSlides = slides.length;
+
+document.querySelector('.next').addEventListener('click', () => {
+    slides[currentSlide].classList.remove('active');
+    currentSlide = (currentSlide + 1) % totalSlides;
+    slides[currentSlide].classList.add('active');
+});
+
+document.querySelector('.prev').addEventListener('click', () => {
+    slides[currentSlide].classList.remove('active');
+    currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
+    slides[currentSlide].classList.add('active');
+});
+
+// Inicializar primer slide
+slides[currentSlide].classList.add('active');
+</script>
+
+
+<!-- Marcas patrocinadoras -->
+<section class="marcas">
+    <h2>Marcas que patrocinamos</h2>
+    <div class="marcas-container">
+        {% set marcas = ['nike.png', 'adidas.png', 'puma.png', 'newbalance.png'] %}
+        {% for marca in marcas %}
+            <div class="marca">
+                <img src="{{ url_for('static', filename='img/' ~ marca) }}" alt="{{ marca.split('.')[0] }}">
+            </div>
+        {% endfor %}
+    </div>
+</section>
+
+{% endblock %}
