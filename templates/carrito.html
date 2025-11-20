@@ -1,43 +1,127 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h2 style="text-align:center; margin-top:30px;">🛒 Tu Carrito de Compras</h2>
+<h2 style="text-align:center; margin-top:20px;">🛒 Tu Carrito</h2>
 
 {% if carrito|length == 0 %}
     <p style="text-align:center; font-size:18px; margin-top:40px;">
         Tu carrito está vacío 🛍️
     </p>
 {% else %}
-    <table style="margin: 30px auto; width:80%; border-collapse: collapse;">
-        <tr style="background-color:#00aa00; color:white;">
-            <th style="padding:10px;">Producto</th>
-            <th style="padding:10px;">Precio (MXN)</th>
-            <th style="padding:10px;">Cantidad</th>
-            <th style="padding:10px;">Acción</th>
-        </tr>
-        {% for item in carrito %}
-        <tr style="border-bottom:1px solid #ddd; text-align:center;">
-            <td style="padding:10px;">{{ item['nombre'] }}</td>
-            <td style="padding:10px;">${{ item['precio'] }}</td>
-            <td style="padding:10px;">{{ item['cantidad'] }}</td>
-            <td style="padding:10px;">
-                <a href="{{ url_for('eliminar_carrito', id=item['id']) }}" 
-                   style="color:red; text-decoration:none;">🗑️ Eliminar</a>
-            </td>
-        </tr>
-        {% endfor %}
-    </table>
 
-    <div style="text-align:center; margin-top:20px;">
-        <h3>Total: ${{ total }} MXN</h3>
-        <a href="{{ url_for('vaciar_carrito') }}" 
-           style="background-color:red; color:white; padding:10px 20px; text-decoration:none; border-radius:5px;">
-           Vaciar carrito
-        </a>
-        <a href="#" 
-           style="background-color:#00aa00; color:white; padding:10px 20px; text-decoration:none; border-radius:5px; margin-left:10px;">
-           Finalizar compra ✅
-        </a>
+<div class="carrito-container">
+
+    <!-- LISTA DE PRODUCTOS -->
+    <div class="carrito-items">
+        {% for item in carrito %}
+        <div class="carrito-card">
+
+            <img src="{{ url_for('static', filename='img/' ~ item['imagen']) }}" alt="{{ item['nombre'] }}">
+
+            <div class="carrito-info">
+                <h3>{{ item['nombre'] }}</h3>
+                <p>Precio: ${{ item['precio'] }}</p>
+                <p>Subtotal: ${{ item['precio'] * item['cantidad'] }}</p>
+
+                <div class="cantidad-control">
+                    <button onclick="cambiarCantidad('{{ item.id }}', 'restar')">-</button>
+                    <span>{{ item.cantidad }}</span>
+                    <button onclick="cambiarCantidad('{{ item.id }}', 'sumar')">+</button>
+                </div>
+                
+
+                    
+            </div>
+
+        </div>
+        {% endfor %}
     </div>
+
+    <!-- RESUMEN DE COMPRA -->
+    <div class="carrito-resumen">
+        <h3>Resumen</h3>
+
+        <div class="resumen-linea">
+            <span>Subtotal:</span>
+            <span>${{ total }}</span>
+        </div>
+
+        {% set envio = 0 if total >= 1000 else 120 %}
+
+        <div class="resumen-linea">
+            <span>Envío:</span>
+            {% if total >= 1000 %}
+                <span class="total-gratis">GRATIS</span>
+            {% else %}
+                <span>${{ envio }}</span>
+            {% endif %}
+        </div>
+
+        <hr style="margin: 15px 0;">
+
+        <div class="resumen-linea" style="font-size:20px; font-weight:bold;">
+            <span>Total:</span>
+            <span>${{ total + envio }}</span>
+        </div>
+
+        <a class="boton-finalizar" href="#">Finalizar compra</a>
+
+        <!-- PAYPAL -->
+<div id="paypal-button-container" style="margin-top: 20px;"></div>
+
+<script src="https://www.paypal.com/sdk/js?client-id=Ad0oaK7LOa0ypSndiJ9q7tM3acExIZm8IRX95Y2_KptuF-pzGT_NcJ6KNJ6n2vy5CODsUG4oHk8S3xy1&currency=MXN"></script>
+
+<script>
+paypal.Buttons({
+
+    createOrder: function(data, actions) {
+        return actions.order.create({
+            purchase_units: [{
+                amount: {
+                    value: '{{ total + envio }}'   // TOTAL DEL CARRITO
+                }
+            }]
+        });
+    },
+
+    onApprove: function(data, actions) {
+        return actions.order.capture().then(function(detalles) {
+
+            // Enviar la información del pago al servidor Flask
+            fetch("/pago_completado", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(detalles)
+            }).then(() => {
+                alert("Pago realizado con éxito");
+                window.location.href = "/gracias";
+            });
+
+        });
+    },
+
+    onCancel: function(data) {
+        alert("El pago fue cancelado");
+    }
+
+}).render('#paypal-button-container');
+</script>
+
+
+        <a class="boton-vaciar" href="{{ url_for('vaciar_carrito') }}">Vaciar carrito</a>
+    </div>
+
+</div>
+
 {% endif %}
+
+<script>
+function cambiarCantidad(id, accion) {
+    fetch(`/actualizar_cantidad/${id}/${accion}`)
+    .then(() => location.reload());
+}
+</script>
+
 {% endblock %}

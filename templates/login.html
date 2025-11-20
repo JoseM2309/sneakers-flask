@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Iniciar Sesión</title>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: rgba(0,0,0,0.4);
+        }
+
+        /* Fondo oscuro */
+        .modal-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Caja */
+        .modal-box {
+            background: white;
+            width: 380px;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 0 25px rgba(0,0,0,0.3);
+            animation: pop .25s ease-out;
+        }
+
+        @keyframes pop {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-box h2 {
+            margin: 0 0 10px;
+            text-align: center;
+        }
+
+        .modal-box form input {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+        }
+
+        .modal-box button {
+            width: 100%;
+            padding: 10px;
+            background: black;
+            color: white;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .cerrar {
+            text-align: center;
+            margin-top: 12px;
+            cursor: pointer;
+            color: #444;
+        }
+
+        /* Flash */
+        .alert {
+            padding: 8px;
+            margin-bottom: 12px;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .alert-success { background: #d4edda; color: #155724; }
+        .alert-error { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+
+<body>
+
+<div class="modal-bg" id="modal-login">
+    <div class="modal-box">
+
+        <h2><i class="fa-solid fa-user"></i> Iniciar Sesión</h2>
+
+        <!-- FLASH MESSAGES -->
+        {% with mensajes = get_flashed_messages(with_categories=true) %}
+            {% if mensajes %}
+                {% for categoria, mensaje in mensajes %}
+                    <div class="alert alert-{{ categoria }}">{{ mensaje }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form action="/login" method="POST">
+
+            <input type="email" name="email" placeholder="Correo electrónico" required>
+            <input type="password" name="password" placeholder="Contraseña" required>
+
+            <button type="submit">Entrar</button>
+
+        </form>
+
+        <div class="cerrar" onclick="window.location='/'">Cancelar</div>
+
+        <div style="text-align:center; margin-top:10px;">
+            <a href="/registro">¿No tienes cuenta? Regístrate</a>
+        </div>
+
+    </div>
+</div>
+
+</body>
+</html>

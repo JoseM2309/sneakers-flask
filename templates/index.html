@@ -1,65 +1,104 @@
 {% extends "base.html" %}
 
 {% block content %}
-<section class="hero-carousel">
-    <div class="carousel-container">
-        {% set novedades = [
-            {'imagen': 'novedad1.png', 'titulo': 'Novedad 1', 'descripcion': 'Diseño innovador para correr rápido.'},
-            {'imagen': 'novedad2.png', 'titulo': 'Novedad 2', 'descripcion': 'Comodidad y estilo en cada paso.'},
-            {'imagen': 'novedad3.png', 'titulo': 'Novedad 3', 'descripcion': 'Ligereza y amortiguación superior.'},
-            {'imagen': 'novedad4.png', 'titulo': 'Novedad 4', 'descripcion': 'Perfectos para cualquier ocasión.'}
-        ] %}
-        <div class="carousel-slides">
-            {% for item in novedades %}
-            <div class="slide">
-                <img src="{{ url_for('static', filename='img/' ~ item.imagen) }}" alt="{{ item.titulo }}">
-                <div class="slide-content">
-                    <h2>{{ item.titulo }}</h2>
-                    <p>{{ item.descripcion }}</p>
-                    <a href="{{ url_for('productos') }}" class="btn-hero">Ver Productos</a>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-        <button class="prev">&#10094;</button>
-        <button class="next">&#10095;</button>
-    </div>
+<!-- Hero con imagen fija -->
+<section class="hero">
+  <div class="hero-content">
+    <h1>Colección Running 2025</h1>
+    <p>Velocidad, ligereza y estilo. Prepárate para superar tus límites con nuestra nueva línea de sneakers.</p>
+    <a href="{{ url_for('productos') }}" class="btn-hero">Ver Productos</a>
+  </div>
 </section>
 
-<!-- Script para carrusel -->
+<!-- Sección de Marcas -->
+<section class="bg-white py-16 text-center">
+  <h2 class="text-3xl font-extrabold mb-8 border-b-4 border-yellow-400 inline-block pb-2">Marcas que patrocinamos</h2>
+  <div class="flex flex-wrap justify-center items-center gap-10 mt-8 px-6">
+    {% set marcas = ['nike.png', 'adidas.png', 'puma.png', 'newbalance.png', 'vans.png'] %}
+    {% for marca in marcas %}
+      <div class="marca hover:scale-110 transition-transform duration-300">
+        <img src="{{ url_for('static', filename='img/' ~ marca) }}" 
+             alt="{{ marca.split('.')[0] }}" 
+             class="h-16 md:h-20 object-contain grayscale hover:grayscale-0 transition-all duration-500">
+      </div>
+    {% endfor %}
+  </div>
+</section>
+
+<!-- Modal de Login (oculto por defecto) -->
+<div id="modalLogin" class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm hidden justify-center items-center z-[999]">
+
+  <div class="bg-white rounded-xl p-8 w-96 shadow-2xl animate-scale">
+    
+    <h2 class="text-2xl font-bold mb-4 text-center flex items-center gap-2 justify-center">
+      <i class="fa-solid fa-user"></i> Iniciar Sesión
+    </h2>
+
+    <form action="/login" method="POST" class="space-y-4">
+
+      <input type="email" name="email" placeholder="Correo electrónico"
+             class="w-full p-3 border rounded-lg focus:ring focus:ring-yellow-300" required>
+
+      <input type="password" name="password" placeholder="Contraseña"
+             class="w-full p-3 border rounded-lg focus:ring focus:ring-yellow-300" required>
+
+      <button type="submit"
+              class="w-full bg-yellow-400 text-black font-semibold py-2 rounded-lg hover:bg-yellow-500 transition">
+        Entrar
+      </button>
+    </form>
+
+    <button id="cerrarModal"
+            class="mt-4 w-full text-gray-600 hover:text-black transition">
+      Cancelar
+    </button>
+
+    <p class="text-center text-sm mt-3">
+      <a href="/registro" class="text-yellow-500 hover:underline">Crear una cuenta</a>
+    </p>
+
+  </div>
+</div>
+
+<style>
+@keyframes scale {
+  from { transform: scale(.8); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+.animate-scale { animation: scale .25s ease-out; }
+
+</style>
+
+
+
 <script>
-let currentSlide = 0;
-const slides = document.querySelectorAll('.slide');
-const totalSlides = slides.length;
-
-document.querySelector('.next').addEventListener('click', () => {
-    slides[currentSlide].classList.remove('active');
-    currentSlide = (currentSlide + 1) % totalSlides;
-    slides[currentSlide].classList.add('active');
-});
-
-document.querySelector('.prev').addEventListener('click', () => {
-    slides[currentSlide].classList.remove('active');
-    currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
-    slides[currentSlide].classList.add('active');
-});
-
-// Inicializar primer slide
-slides[currentSlide].classList.add('active');
-</script>
-
-
-<!-- Marcas patrocinadoras -->
-<section class="marcas">
-    <h2>Marcas que patrocinamos</h2>
-    <div class="marcas-container">
-        {% set marcas = ['nike.png', 'adidas.png', 'puma.png', 'newbalance.png'] %}
-        {% for marca in marcas %}
-            <div class="marca">
-                <img src="{{ url_for('static', filename='img/' ~ marca) }}" alt="{{ marca.split('.')[0] }}">
-            </div>
-        {% endfor %}
-    </div>
-</section>
-
+  document.addEventListener("DOMContentLoaded", () => {
+      
+      const modal = document.getElementById("modalLogin");
+      const btnOpen = document.getElementById("btnLogin");
+      const btnClose = document.getElementById("cerrarModal");
+  
+      // Abrir modal
+      btnOpen.addEventListener("click", () => {
+          modal.classList.remove("hidden");
+          modal.classList.add("flex");
+      });
+  
+      // Cerrar modal
+      btnClose.addEventListener("click", () => {
+          modal.classList.add("hidden");
+          modal.classList.remove("flex");
+      });
+  
+      // Cerrar haciendo clic fuera del cuadro
+      modal.addEventListener("click", (e) => {
+          if (e.target === modal) {
+              modal.classList.add("hidden");
+              modal.classList.remove("flex");
+          }
+      });
+  
+  });
+  </script>
+  
 {% endblock %}

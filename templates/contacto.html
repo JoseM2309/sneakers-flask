@@ -1,13 +1,52 @@
 {% extends "base.html" %}
 {% block content %}
-<section class="contacto">
-    <h2>Contáctanos</h2>
-    <p>¿Tienes dudas o comentarios? Escríbenos y con gusto te atenderemos.</p>
-    <form>
-        <input type="text" placeholder="Tu nombre" required>
-        <input type="email" placeholder="Tu correo" required>
-        <textarea placeholder="Tu mensaje" required></textarea>
-        <button type="submit">Enviar</button>
+<section id="contacto" class="min-h-screen bg-white text-gray-900 py-16 px-6">
+  <div class="max-w-5xl mx-auto text-center mb-12">
+    <h2 class="text-4xl font-extrabold mb-4 border-b-4 border-green-400 inline-block pb-2">Contáctanos</h2>
+    <p class="text-lg text-gray-700">¿Tienes dudas, comentarios o quieres colaborar con nosotros?  
+      En <span class="text-green-500 font-semibold">SneakersMX</span> estamos listos para escucharte 👟</p>
+  </div>
+
+  <div class="max-w-4xl mx-auto grid md:grid-cols-2 gap-10 items-center">
+    <!-- Imagen lateral -->
+    <div class="hidden md:block">
+      <img src="{{ url_for('static', filename='img/contact_us.jpg') }}" 
+           alt="Contáctanos SneakersMX" 
+           class="rounded-2xl shadow-xl hover:scale-105 transition-transform duration-500">
+    </div>
+
+    <!-- Formulario -->
+    <form action="/enviar_mensaje" method="POST" class="bg-gray-50 p-8 rounded-2xl shadow-lg space-y-6">
+      <div>
+        <label for="nombre" class="block text-sm font-semibold text-gray-700 mb-1">Nombre</label>
+        <input type="text" id="nombre" name="nombre" placeholder="Tu nombre completo" required
+               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition">
+      </div>
+
+      <div>
+        <label for="correo" class="block text-sm font-semibold text-gray-700 mb-1">Correo electrónico</label>
+        <input type="email" id="correo" name="correo" placeholder="tucorreo@ejemplo.com" required
+               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition">
+      </div>
+
+      <div>
+        <label for="mensaje" class="block text-sm font-semibold text-gray-700 mb-1">Mensaje</label>
+        <textarea id="mensaje" name="mensaje" rows="5" placeholder="Escribe tu mensaje..." required
+                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition"></textarea>
+      </div>
+
+      <button type="submit"
+              class="w-full bg-green-500 hover:bg-green-400 text-green-900 font-bold py-3 rounded-full shadow-md transition">
+        ✉️ Enviar mensaje
+      </button>
     </form>
+  </div>
+
+  <!-- Información adicional -->
+  <div class="mt-16 text-center text-gray-600">
+    <p>📍 Ciudad de México | 📞 <span class="font-semibold">+52 55 1234 5678</span></p>
+    <p>✉️ contacto@sneakersmx.com</p>
+  </div>
 </section>
 {% endblock %}
+

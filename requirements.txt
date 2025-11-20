@@ -1,0 +1,7 @@
+Flask==3.0.2
+gunicorn
+psycopg2-binary
+Flask-Login
+werkzeug
+requests
+jinja2

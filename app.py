@@ -1,111 +1,289 @@
-from flask import Flask, render_template, request, session, redirect, url_for, jsonify
+from flask import Flask, request, jsonify
+from flask import Flask, render_template, request, session, redirect, url_for, jsonify, flash
+from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
+from werkzeug.security import generate_password_hash, check_password_hash
 import psycopg2
 
 app = Flask(__name__)
 app.secret_key = "sneakersmx_secret_key"
 
-# --- Conexión a PostgreSQL ---
-conn = psycopg2.connect(
-    dbname="sneakers",
-    user="alfredo",
-    password="12345",
-    host="localhost",
-    port="5433"
-)
-cursor = conn.cursor()
+# ==============================
+# FLASK LOGIN CONFIG
+# ==============================
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = "login"
 
-# --- Página principal ---
+
+# ==============================
+# CONEXIÓN A BD
+# ==============================
+def get_db_connection():
+    conn = psycopg2.connect(
+        dbname="sneakers",
+        user="alfredo",
+        password="12345",
+        host="localhost",
+        port="5432"
+    )
+    return conn
+
+
+# ==============================
+# CLASE USUARIO (Flask-Login)
+# ==============================
+class User(UserMixin):
+    def __init__(self, id, nombre, email, password_hash):
+        self.id = str(id)
+        self.nombre = nombre
+        self.email = email
+        self.password_hash = password_hash
+
+
+# ==============================
+# FUNCIONES DE CONSULTA
+# ==============================
+def obtener_usuario_por_email(email):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id, nombre, email, password_hash FROM usuarios WHERE email=%s", (email,))
+    row = cur.fetchone()
+    cur.close()
+    conn.close()
+
+    if row:
+        return User(id=row[0], nombre=row[1], email=row[2], password_hash=row[3])
+    return None
+
+
+def obtener_usuario_por_id(user_id):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id, nombre, email, password_hash FROM usuarios WHERE id=%s", (user_id,))
+    row = cur.fetchone()
+    cur.close()
+    conn.close()
+
+    if row:
+        return User(id=row[0], nombre=row[1], email=row[2], password_hash=row[3])
+    return None
+
+
+# ==============================
+# LOAD USER (Flask-Login)
+# ==============================
+@login_manager.user_loader
+def load_user(user_id):
+    return obtener_usuario_por_id(user_id)
+
+
+# ==============================
+# REGISTRO
+# ==============================
+@app.route('/registro', methods=['GET', 'POST'])
+def registro():
+    if request.method == 'POST':
+        nombre = request.form.get('nombre', '').strip()
+        email = request.form.get('email', '').strip().lower()
+        password = request.form.get('password', '')
+
+        if not nombre or not email or not password:
+            flash("Completa todos los campos.", "error")
+            return redirect(url_for('registro'))
+
+        password_hash = generate_password_hash(password)
+
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        try:
+            cur.execute("""
+                INSERT INTO usuarios (nombre, email, password_hash)
+                VALUES (%s, %s, %s)
+            """, (nombre, email, password_hash))
+            conn.commit()
+        except psycopg2.IntegrityError:
+            conn.rollback()
+            flash("El correo ya está registrado.", "error")
+        except:
+            conn.rollback()
+            flash("Error al registrar usuario.", "error")
+
+        cur.close()
+        conn.close()
+        flash("Registro exitoso. Ahora inicia sesión.", "success")
+        return redirect(url_for('login'))
+
+    return render_template("registro.html")
+
+
+# ==============================
+# LOGIN
+# ==============================
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        email = request.form.get('email').strip().lower()
+        password = request.form.get('password')
+
+        usuario = obtener_usuario_por_email(email)
+
+        if usuario and check_password_hash(usuario.password_hash, password):
+            login_user(usuario)
+            flash(f"Bienvenido {usuario.nombre}!", "success")
+
+            next_page = request.args.get('next')
+            return redirect(next_page or url_for('index'))
+        else:
+            flash("Correo o contraseña incorrectos.", "error")
+            return redirect(url_for('login'))
+
+    return render_template("login.html")
+
+
+# ==============================
+# LOGOUT
+# ==============================
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('index'))
+
+
+# ==============================
+# HOME
+# ==============================
 @app.route('/')
 def index():
     return render_template('index.html')
 
-# --- Página Conócenos ---
+
+# ==============================
+# CONÓCENOS
+# ==============================
 @app.route('/conocenos')
 def conocenos():
     return render_template('conocenos.html')
 
-# --- Página Productos ---
+
+# ==============================
+# PRODUCTOS POR MARCAS
+# ==============================
 @app.route('/productos')
 def productos():
-    # Seleccionamos id, nombre, descripcion, precio e imagen
-    cursor.execute("SELECT id, nombre, descripcion, precio, imagen FROM productos;")
-    filas = cursor.fetchall()
+    conn = get_db_connection()
+    cur = conn.cursor()
 
-    # Convertimos a lista de diccionarios
-    productos = [
-        {
-            "id": row[0],
-            "nombre": row[1],
-            "descripcion": row[2],
-            "precio": row[3],
-            "imagen": row[4]
-        }
-        for row in filas
-    ]
+    cur.execute("SELECT id, nombre FROM marcas;")
+    marcas_filas = cur.fetchall()
 
-    return render_template('productos.html', productos=productos)
+    productos_por_marca = []
 
-# --- Agregar al carrito por id (opcional) ---
+    for marca_id, marca_nombre in marcas_filas:
+        cur.execute("""
+            SELECT id, nombre, descripcion, precio, imagen
+            FROM productos
+            WHERE marca_id = %s
+        """, (marca_id,))
+        productos = cur.fetchall()
+
+        lista = [
+            {"id": p[0], "nombre": p[1], "descripcion": p[2], "precio": p[3], "imagen": p[4]}
+            for p in productos
+        ]
+
+        if lista:
+            productos_por_marca.append({
+                "marca": marca_nombre,
+                "productos": lista
+            })
+
+    cur.close()
+    conn.close()
+
+    return render_template("productos.html", productos_por_marca=productos_por_marca)
+
+
+# ==============================
+# AGREGAR AL CARRITO
+# ==============================
 @app.route('/agregar_carrito/<int:id>')
 def agregar_carrito(id):
-    # Buscamos el producto por id
-    cursor.execute("SELECT id, nombre, precio FROM productos WHERE id=%s;", (id,))
-    fila = cursor.fetchone()
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id, nombre, precio, imagen FROM productos WHERE id=%s", (id,))
+    fila = cur.fetchone()
+    cur.close()
+    conn.close()
+
     if fila:
         carrito = session.get('carrito', [])
-        # Verificamos si ya existe el producto
-        encontrado = False
-        for item in carrito:
-            if item['id'] == fila[0]:
-                item['cantidad'] += 1
-                encontrado = True
-                break
-        if not encontrado:
-            carrito.append({'id': fila[0], 'nombre': fila[1], 'precio': float(fila[2]), 'cantidad': 1})
+        encontrado = next((p for p in carrito if p['id'] == fila[0]), None)
+
+        if encontrado:
+            encontrado['cantidad'] += 1
+        else:
+            carrito.append({
+                'id': fila[0],
+                'nombre': fila[1],
+                'precio': float(fila[2]),
+                'imagen': fila[3],
+                'cantidad': 1
+            })
+
         session['carrito'] = carrito
-    return redirect(url_for('carrito'))
 
-# --- Guardar carrito desde el flotante ---
-@app.route('/guardar_carrito', methods=['POST'])
-def guardar_carrito():
-    datos = request.get_json()
-    if datos:
-        session_carrito = session.get('carrito', [])
-        for item in datos:
-            # Verificar si ya existe en session
-            existente = next((p for p in session_carrito if p['nombre'] == item['nombre']), None)
-            if existente:
-                existente['cantidad'] += item['cantidad']
-            else:
-                session_carrito.append(item)
-        session['carrito'] = session_carrito
-    return jsonify({"status": "ok"})
+    return jsonify({"mensaje": "agregado"})
 
-# --- Página de contacto ---
-@app.route('/contacto', methods=['GET', 'POST'])
-def contacto():
-    if request.method == 'POST':
-        nombre = request.form['nombre']
-        correo = request.form['correo']
-        mensaje = request.form['mensaje']
-        print(f"Nuevo mensaje de {nombre} ({correo}): {mensaje}")
-        return render_template('contacto.html', mensaje_enviado=True)
-    return render_template('contacto.html')
 
-# --- Página del carrito ---
+# ==============================
+# CAMBIAR CANTIDAD
+# ==============================
+@app.route('/actualizar_cantidad/<int:id>/<string:accion>')
+def actualizar_cantidad(id, accion):
+    carrito = session.get('carrito', [])
+
+    for item in carrito:
+        if item['id'] == id:
+            if accion == "sumar":
+                item['cantidad'] += 1
+            elif accion == "restar":
+                item['cantidad'] -= 1
+                if item['cantidad'] <= 0:
+                    carrito = [p for p in carrito if p['id'] != id]
+            break
+
+    session['carrito'] = carrito
+    return ("", 204)
+
+
+# ==============================
+# CARRITO
+# ==============================
 @app.route('/carrito')
 def carrito():
     carrito = session.get('carrito', [])
-    total = sum(item['precio'] * item['cantidad'] for item in carrito)
-    return render_template('carrito.html', carrito=carrito, total=total)
 
-# --- Vaciar carrito ---
+    subtotal = sum(item['precio'] * item['cantidad'] for item in carrito)
+    envio = 150 if subtotal < 1000 else 0
+    total = subtotal + envio
+
+    return render_template('carrito.html', carrito=carrito, subtotal=subtotal, envio=envio, total=total)
+
+
+# ==============================
+# VACIAR CARRITO
+# ==============================
 @app.route('/vaciar_carrito')
 def vaciar_carrito():
     session['carrito'] = []
     return redirect(url_for('carrito'))
 
-# --- Eliminar un producto del carrito ---
+
+# ==============================
+# ELIMINAR DEL CARRITO
+# ==============================
 @app.route('/eliminar_carrito/<int:id>')
 def eliminar_carrito(id):
     carrito = session.get('carrito', [])
@@ -113,8 +291,34 @@ def eliminar_carrito(id):
     session['carrito'] = carrito
     return redirect(url_for('carrito'))
 
-# --- Ejecutar servidor ---
+
+# ==============================
+# CONTACTO
+# ==============================
+@app.route('/contacto', methods=['GET', 'POST'])
+def contacto():
+    if request.method == 'POST':
+        print("Nuevo mensaje:", request.form)
+        return render_template('contacto.html', mensaje_enviado=True)
+
+    return render_template('contacto.html')
+
+
+# ==============================
+# RUN SERVER
+# ==============================
 if __name__ == '__main__':
     app.run(debug=True)
 
 
+@app.post("/pago_completado")
+def pago_completado():
+    data = request.get_json()
+
+    print("PAGO RECIBIDO:", data["id"])
+    print("COMPRADOR:", data["payer"]["name"]["given_name"])
+
+    # Aquí vacías el carrito en la sesión
+    session['carrito'] = []
+
+    return jsonify({"status": "ok"})
