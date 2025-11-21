@@ -430,11 +430,23 @@ if __name__ == '__main__':
 @app.post("/pago_completado")
 def pago_completado():
     data = request.get_json()
+    recaptcha_token = data.get("recaptcha_token")  # Token enviado desde el frontend
+    recaptcha_secret = os.environ.get("RECAPTCHA_SECRET_KEY")  # Tu secret key
 
-    print("PAGO RECIBIDO:", data["id"])
-    print("COMPRADOR:", data["payer"]["name"]["given_name"])
+    # Verificar token con Google
+    response = requests.post(
+        "https://www.google.com/recaptcha/api/siteverify",
+        data={"secret": recaptcha_secret, "response": recaptcha_token}
+    )
+    result = response.json()
 
-    # Aquí vacías el carrito en la sesión
+    if not result.get("success") or result.get("score", 0) < 0.5:
+        return jsonify({"status": "error", "mensaje": "reCAPTCHA fallido"}), 400
+
+    print("PAGO RECIBIDO:", data["detalles"]["id"])
+    print("COMPRADOR:", data["detalles"]["payer"]["name"]["given_name"])
+
+    # Vaciar carrito en la sesión
     session['carrito'] = []
 
     return jsonify({"status": "ok"})
