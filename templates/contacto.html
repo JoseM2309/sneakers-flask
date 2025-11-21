@@ -16,7 +16,7 @@
     </div>
 
     <!-- Formulario -->
-    <form action="/enviar_mensaje" method="POST" class="bg-gray-50 p-8 rounded-2xl shadow-lg space-y-6">
+    <form action="{{ url_for('contacto') }}" method="POST" class="bg-gray-50 p-8 rounded-2xl shadow-lg space-y-6">
       <div>
         <label for="nombre" class="block text-sm font-semibold text-gray-700 mb-1">Nombre</label>
         <input type="text" id="nombre" name="nombre" placeholder="Tu nombre completo" required
@@ -35,6 +35,9 @@
                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition"></textarea>
       </div>
 
+      <!-- reCAPTCHA v3 -->
+      <input type="hidden" name="g-recaptcha-response" id="g-recaptcha-response">
+
       <button type="submit"
               class="w-full bg-green-500 hover:bg-green-400 text-green-900 font-bold py-3 rounded-full shadow-md transition">
         ✉️ Enviar mensaje
@@ -48,5 +51,15 @@
     <p>✉️ contacto@sneakersmx.com</p>
   </div>
 </section>
+
+<!-- Script reCAPTCHA -->
+<script src="https://www.google.com/recaptcha/api.js?render=6LfgThQsAAAAAKBIskJdPoTp_e9DeehR4fWAOZQc"></script>
+<script>
+grecaptcha.ready(function() {
+    grecaptcha.execute('6LfgThQsAAAAAKBIskJdPoTp_e9DeehR4fWAOZQc', {action: 'contact'}).then(function(token) {
+        document.getElementById('g-recaptcha-response').value = token;
+    });
+});
+</script>
 {% endblock %}
 
