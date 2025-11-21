@@ -1,12 +1,14 @@
+from flask import Flask, request, jsonify
 from flask import Flask, render_template, request, session, redirect, url_for, jsonify, flash
-from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required
+from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 import psycopg2
 import os
-import requests
+
+
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("FLASK_SECRET_KEY", "sneakersmx_secret_key")
+app.secret_key = "sneakersmx_secret_key"
 
 # ==============================
 # FLASK LOGIN CONFIG
@@ -15,23 +17,19 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = "login"
 
+
 # ==============================
 # CONEXIÓN A BD
 # ==============================
 def get_db_connection():
-    try:
-        conn = psycopg2.connect(
-            dbname="sneakers_db_g0p6",
-            user=os.environ.get("sneakers_db_g0p6_user"),
-            password=os.environ.get("upV4O9iC3ATKiIWKPpV657s9Qg1nlrZL"),
-            host=os.environ.get("dpg-d4fbdtodl3ps73cr042g-a.oregon-postgres.render.com"),
-            port=os.environ.get("5432"),
-            sslmode="require"   # Render lo exige
-        )
-        return conn
-    except Exception as e:
-        print("Error conectando a la DB:", e)
-        return None
+    conn = psycopg2.connect(
+        dbname="sneakers_db_g0p6",
+        user="postgres",
+        password="upV4O9iC3ATKiIWKPpV657s9Qg1nlrZL",
+        host="dpg-d4fbdtodl3ps73cr042g-a.oregon-postgres.render.com ",
+        port="5432"
+    )
+    return conn
 
 
 # ==============================
@@ -44,13 +42,12 @@ class User(UserMixin):
         self.email = email
         self.password_hash = password_hash
 
+
 # ==============================
 # FUNCIONES DE CONSULTA
 # ==============================
 def obtener_usuario_por_email(email):
     conn = get_db_connection()
-    if not conn:
-        return None
     cur = conn.cursor()
     cur.execute("SELECT id, nombre, email, password_hash FROM usuarios WHERE email=%s", (email,))
     row = cur.fetchone()
@@ -61,10 +58,9 @@ def obtener_usuario_por_email(email):
         return User(id=row[0], nombre=row[1], email=row[2], password_hash=row[3])
     return None
 
+
 def obtener_usuario_por_id(user_id):
     conn = get_db_connection()
-    if not conn:
-        return None
     cur = conn.cursor()
     cur.execute("SELECT id, nombre, email, password_hash FROM usuarios WHERE id=%s", (user_id,))
     row = cur.fetchone()
@@ -75,12 +71,14 @@ def obtener_usuario_por_id(user_id):
         return User(id=row[0], nombre=row[1], email=row[2], password_hash=row[3])
     return None
 
+
 # ==============================
 # LOAD USER (Flask-Login)
 # ==============================
 @login_manager.user_loader
 def load_user(user_id):
     return obtener_usuario_por_id(user_id)
+
 
 # ==============================
 # REGISTRO
@@ -97,27 +95,30 @@ def registro():
             return redirect(url_for('registro'))
 
         password_hash = generate_password_hash(password)
+
         conn = get_db_connection()
-        if not conn:
-            flash("Error de conexión con la base de datos.", "error")
-            return redirect(url_for('registro'))
         cur = conn.cursor()
+
         try:
-            cur.execute("INSERT INTO usuarios (nombre, email, password_hash) VALUES (%s,%s,%s)",
-                        (nombre, email, password_hash))
+            cur.execute("""
+                INSERT INTO usuarios (nombre, email, password_hash)
+                VALUES (%s, %s, %s)
+            """, (nombre, email, password_hash))
             conn.commit()
-            flash("Registro exitoso. Ahora inicia sesión.", "success")
         except psycopg2.IntegrityError:
             conn.rollback()
             flash("El correo ya está registrado.", "error")
-        except Exception:
+        except:
             conn.rollback()
             flash("Error al registrar usuario.", "error")
-        finally:
-            cur.close()
-            conn.close()
+
+        cur.close()
+        conn.close()
+        flash("Registro exitoso. Ahora inicia sesión.", "success")
         return redirect(url_for('login'))
+
     return render_template("registro.html")
+
 
 # ==============================
 # LOGIN
@@ -129,15 +130,19 @@ def login():
         password = request.form.get('password')
 
         usuario = obtener_usuario_por_email(email)
+
         if usuario and check_password_hash(usuario.password_hash, password):
             login_user(usuario)
             flash(f"Bienvenido {usuario.nombre}!", "success")
+
             next_page = request.args.get('next')
             return redirect(next_page or url_for('index'))
         else:
             flash("Correo o contraseña incorrectos.", "error")
             return redirect(url_for('login'))
+
     return render_template("login.html")
+
 
 # ==============================
 # LOGOUT
@@ -148,12 +153,14 @@ def logout():
     logout_user()
     return redirect(url_for('index'))
 
+
 # ==============================
 # HOME
 # ==============================
 @app.route('/')
 def index():
     return render_template('index.html')
+
 
 # ==============================
 # CONÓCENOS
@@ -162,48 +169,51 @@ def index():
 def conocenos():
     return render_template('conocenos.html')
 
+
 # ==============================
 # PRODUCTOS POR MARCAS
 # ==============================
 @app.route('/productos')
 def productos():
     conn = get_db_connection()
-    if not conn:
-        flash("Error de conexión con la base de datos.", "error")
-        return redirect(url_for('index'))
-
     cur = conn.cursor()
-    try:
-        cur.execute("SELECT id, nombre FROM marcas;")
-        marcas_filas = cur.fetchall()
-        productos_por_marca = []
 
-        for marca_id, marca_nombre in marcas_filas:
-            cur.execute("SELECT id, nombre, descripcion, precio, imagen FROM productos WHERE marca_id = %s", (marca_id,))
-            productos = cur.fetchall()
-            lista = [
-                {"id": p[0], "nombre": p[1], "descripcion": p[2], "precio": p[3], "imagen": p[4]}
-                for p in productos
-            ]
-            if lista:
-                productos_por_marca.append({"marca": marca_nombre, "productos": lista})
-        return render_template("productos.html", productos_por_marca=productos_por_marca)
-    except Exception as e:
-        print("Error al consultar productos:", e)
-        flash("Error al cargar los productos.", "error")
-        return redirect(url_for('index'))
-    finally:
-        cur.close()
-        conn.close()
+    cur.execute("SELECT id, nombre FROM marcas;")
+    marcas_filas = cur.fetchall()
+
+    productos_por_marca = []
+
+    for marca_id, marca_nombre in marcas_filas:
+        cur.execute("""
+            SELECT id, nombre, descripcion, precio, imagen
+            FROM productos
+            WHERE marca_id = %s
+        """, (marca_id,))
+        productos = cur.fetchall()
+
+        lista = [
+            {"id": p[0], "nombre": p[1], "descripcion": p[2], "precio": p[3], "imagen": p[4]}
+            for p in productos
+        ]
+
+        if lista:
+            productos_por_marca.append({
+                "marca": marca_nombre,
+                "productos": lista
+            })
+
+    cur.close()
+    conn.close()
+
+    return render_template("productos.html", productos_por_marca=productos_por_marca)
+
 
 # ==============================
-# CARRITO
+# AGREGAR AL CARRITO
 # ==============================
 @app.route('/agregar_carrito/<int:id>')
 def agregar_carrito(id):
     conn = get_db_connection()
-    if not conn:
-        return jsonify({"error": "Error de conexión con la base de datos"}), 500
     cur = conn.cursor()
     cur.execute("SELECT id, nombre, precio, imagen FROM productos WHERE id=%s", (id,))
     fila = cur.fetchone()
@@ -213,6 +223,7 @@ def agregar_carrito(id):
     if fila:
         carrito = session.get('carrito', [])
         encontrado = next((p for p in carrito if p['id'] == fila[0]), None)
+
         if encontrado:
             encontrado['cantidad'] += 1
         else:
@@ -223,12 +234,19 @@ def agregar_carrito(id):
                 'imagen': fila[3],
                 'cantidad': 1
             })
+
         session['carrito'] = carrito
+
     return jsonify({"mensaje": "agregado"})
 
+
+# ==============================
+# CAMBIAR CANTIDAD
+# ==============================
 @app.route('/actualizar_cantidad/<int:id>/<string:accion>')
 def actualizar_cantidad(id, accion):
     carrito = session.get('carrito', [])
+
     for item in carrito:
         if item['id'] == id:
             if accion == "sumar":
@@ -238,28 +256,51 @@ def actualizar_cantidad(id, accion):
                 if item['cantidad'] <= 0:
                     carrito = [p for p in carrito if p['id'] != id]
             break
+
     session['carrito'] = carrito
     return ("", 204)
 
+
+# ==============================
+# CARRITO
+# ==============================
 @app.route('/carrito')
 def carrito():
     carrito = session.get('carrito', [])
     subtotal = sum(item['precio'] * item['cantidad'] for item in carrito)
     envio = 150 if subtotal < 1000 else 0
     total = subtotal + envio
-    return render_template('carrito.html', carrito=carrito, subtotal=subtotal, envio=envio, total=total)
 
+    recaptcha_site_key = os.environ.get('RECAPTCHA_SITE_KEY')
+
+    return render_template(
+        'carrito.html',
+        carrito=carrito,
+        subtotal=subtotal,
+        envio=envio,
+        total=total,
+        recaptcha_site_key=recaptcha_site_key
+    )
+
+# ==============================
+# VACIAR CARRITO
+# ==============================
 @app.route('/vaciar_carrito')
 def vaciar_carrito():
     session['carrito'] = []
     return redirect(url_for('carrito'))
 
+
+# ==============================
+# ELIMINAR DEL CARRITO
+# ==============================
 @app.route('/eliminar_carrito/<int:id>')
 def eliminar_carrito(id):
     carrito = session.get('carrito', [])
     carrito = [item for item in carrito if item['id'] != id]
     session['carrito'] = carrito
     return redirect(url_for('carrito'))
+
 
 # ==============================
 # CONTACTO
@@ -269,20 +310,9 @@ def contacto():
     if request.method == 'POST':
         print("Nuevo mensaje:", request.form)
         return render_template('contacto.html', mensaje_enviado=True)
+
     return render_template('contacto.html')
 
-# ==============================
-# PAGO (SIN CAPTCHA)
-# ==============================
-@app.post("/pago_completado")
-def pago_completado():
-    data = request.get_json()
-
-    print("PAGO RECIBIDO:", data["detalles"]["id"])
-    print("COMPRADOR:", data["detalles"]["payer"]["name"]["given_name"])
-
-    session['carrito'] = []
-    return jsonify({"status": "ok"})
 
 # ==============================
 # RUN SERVER
@@ -290,3 +320,15 @@ def pago_completado():
 if __name__ == '__main__':
     app.run(debug=True)
 
+
+@app.post("/pago_completado")
+def pago_completado():
+    data = request.get_json()
+
+    print("PAGO RECIBIDO:", data["id"])
+    print("COMPRADOR:", data["payer"]["name"]["given_name"])
+
+    # Aquí vacías el carrito en la sesión
+    session['carrito'] = []
+
+    return jsonify({"status": "ok"})
