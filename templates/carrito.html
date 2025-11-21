@@ -15,22 +15,17 @@
     <div class="carrito-items">
         {% for item in carrito %}
         <div class="carrito-card">
-
             <img src="{{ url_for('static', filename='img/' ~ item['imagen']) }}" alt="{{ item['nombre'] }}">
-
             <div class="carrito-info">
                 <h3>{{ item['nombre'] }}</h3>
                 <p>Precio: ${{ item['precio'] }}</p>
                 <p>Subtotal: ${{ item['precio'] * item['cantidad'] }}</p>
-
                 <div class="cantidad-control">
                     <button class="btn-cantidad" onclick="cambiarCantidad('{{ item.id }}', 'restar')">-</button>
                     <span>{{ item.cantidad }}</span>
                     <button class="btn-cantidad" onclick="cambiarCantidad('{{ item.id }}', 'sumar')">+</button>
                 </div>
-
             </div>
-
         </div>
         {% endfor %}
     </div>
@@ -38,12 +33,10 @@
     <!-- RESUMEN DE COMPRA Y BOTÓN FINALIZAR -->
     <div class="carrito-resumen">
         <h3>Resumen</h3>
-
         <div class="resumen-linea">
             <span>Subtotal:</span>
             <span>${{ subtotal }}</span>
         </div>
-
         <div class="resumen-linea">
             <span>Envío:</span>
             {% if envio == 0 %}
@@ -52,16 +45,17 @@
                 <span>${{ envio }}</span>
             {% endif %}
         </div>
-
         <hr style="margin: 15px 0;">
-
         <div class="resumen-linea" style="font-size:20px; font-weight:bold;">
             <span>Total:</span>
             <span>${{ total }}</span>
         </div>
 
-        <!-- BOTÓN FINALIZAR -->
-        <a class="boton-finalizar" href="#" id="finalizar-compra">Finalizar compra</a>
+        <!-- BOTÓN FINALIZAR CON reCAPTCHA -->
+        <form id="carrito-form">
+            <input type="hidden" id="recaptcha_token" name="recaptcha_token">
+            <button type="submit" id="finalizar-compra" class="boton-finalizar">Finalizar compra</button>
+        </form>
 
         <!-- PAYPAL OCULTO -->
         <div id="paypal-button-container" style="margin-top: 20px; display:none;"></div>
@@ -75,38 +69,37 @@
 <!-- SDK de PayPal -->
 <script src="https://www.paypal.com/sdk/js?client-id=Ad0oaK7LOa0ypSndiJ9q7tM3acExIZm8IRX95Y2_KptuF-pzGT_NcJ6KNJ6n2vy5CODsUG4oHk8S3xy1&currency=MXN"></script>
 
+<!-- reCAPTCHA v3 -->
+<script src="https://www.google.com/recaptcha/api.js?render=6LfgThQsAAAAAKBIskJdPoTp_e9DeehR4fWAOZQc"></script>
+
 <script>
 function cambiarCantidad(id, accion) {
-    fetch(`/actualizar_cantidad/${id}/${accion}`)
-    .then(() => location.reload());
+    fetch(`/actualizar_cantidad/${id}/${accion}`).then(() => location.reload());
 }
 
-// Mostrar PayPal y ocultar botones del carrito
-document.getElementById('finalizar-compra').addEventListener('click', function(e) {
+// Validar reCAPTCHA antes de mostrar PayPal
+document.getElementById('carrito-form').addEventListener('submit', function(e) {
     e.preventDefault();
+    grecaptcha.ready(function() {
+        grecaptcha.execute('6LfgThQsAAAAAKBIskJdPoTp_e9DeehR4fWAOZQc', {action: 'finalizar_compra'}).then(function(token) {
+            document.getElementById('recaptcha_token').value = token;
 
-    // Ocultar botones de cantidad
-    document.querySelectorAll('.btn-cantidad').forEach(btn => btn.style.display = 'none');
+            // Ocultar botones del carrito
+            document.querySelectorAll('.btn-cantidad').forEach(btn => btn.style.display = 'none');
+            document.getElementById('vaciar-carrito').style.display = 'none';
+            document.getElementById('finalizar-compra').style.display = 'none';
 
-    // Ocultar botón vaciar carrito
-    document.getElementById('vaciar-carrito').style.display = 'none';
-
-    // Ocultar botón finalizar
-    this.style.display = 'none';
-
-    // Mostrar PayPal
-    document.getElementById('paypal-button-container').style.display = 'block';
+            // Mostrar PayPal
+            document.getElementById('paypal-button-container').style.display = 'block';
+        });
+    });
 });
 
 // Configuración de PayPal
 paypal.Buttons({
     createOrder: function(data, actions) {
         return actions.order.create({
-            purchase_units: [{
-                amount: {
-                    value: '{{ total }}'
-                }
-            }]
+            purchase_units: [{ amount: { value: '{{ total }}' } }]
         });
     },
     onApprove: function(data, actions) {
@@ -133,4 +126,3 @@ paypal.Buttons({
 
 {% endif %}
 {% endblock %}
-
