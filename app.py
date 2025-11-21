@@ -218,6 +218,15 @@ def productos():
         cur.close()
         conn.close()
 
+# ==============================
+# conocenos
+# ==============================
+
+
+@app.route("/conocenos")
+def conocenos():
+    return render_template("conocenos.html")
+
 
 # ==============================
 # CARRITO
