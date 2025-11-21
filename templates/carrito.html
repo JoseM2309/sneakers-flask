@@ -24,33 +24,29 @@
                 <p>Subtotal: ${{ item['precio'] * item['cantidad'] }}</p>
 
                 <div class="cantidad-control">
-                    <button onclick="cambiarCantidad('{{ item.id }}', 'restar')">-</button>
+                    <button class="btn-cantidad" onclick="cambiarCantidad('{{ item.id }}', 'restar')">-</button>
                     <span>{{ item.cantidad }}</span>
-                    <button onclick="cambiarCantidad('{{ item.id }}', 'sumar')">+</button>
+                    <button class="btn-cantidad" onclick="cambiarCantidad('{{ item.id }}', 'sumar')">+</button>
                 </div>
-                
 
-                    
             </div>
 
         </div>
         {% endfor %}
     </div>
 
-    <!-- RESUMEN DE COMPRA -->
+    <!-- RESUMEN DE COMPRA Y BOTÓN FINALIZAR -->
     <div class="carrito-resumen">
         <h3>Resumen</h3>
 
         <div class="resumen-linea">
             <span>Subtotal:</span>
-            <span>${{ total }}</span>
+            <span>${{ subtotal }}</span>
         </div>
-
-        {% set envio = 0 if total >= 1000 else 120 %}
 
         <div class="resumen-linea">
             <span>Envío:</span>
-            {% if total >= 1000 %}
+            {% if envio == 0 %}
                 <span class="total-gratis">GRATIS</span>
             {% else %}
                 <span>${{ envio }}</span>
@@ -61,67 +57,73 @@
 
         <div class="resumen-linea" style="font-size:20px; font-weight:bold;">
             <span>Total:</span>
-            <span>${{ total + envio }}</span>
+            <span>${{ total }}</span>
         </div>
 
-        <a class="boton-finalizar" href="#">Finalizar compra</a>
+        <!-- BOTÓN FINALIZAR -->
+        <a class="boton-finalizar" href="#" id="finalizar-compra">Finalizar compra</a>
 
-        <!-- PAYPAL -->
-<div id="paypal-button-container" style="margin-top: 20px;"></div>
+        <!-- PAYPAL OCULTO -->
+        <div id="paypal-button-container" style="margin-top: 20px; display:none;"></div>
 
-<script src="https://www.paypal.com/sdk/js?client-id=Ad0oaK7LOa0ypSndiJ9q7tM3acExIZm8IRX95Y2_KptuF-pzGT_NcJ6KNJ6n2vy5CODsUG4oHk8S3xy1&currency=MXN"></script>
-
-<script>
-paypal.Buttons({
-
-    createOrder: function(data, actions) {
-        return actions.order.create({
-            purchase_units: [{
-                amount: {
-                    value: '{{ total + envio }}'   // TOTAL DEL CARRITO
-                }
-            }]
-        });
-    },
-
-    onApprove: function(data, actions) {
-        return actions.order.capture().then(function(detalles) {
-
-            // Enviar la información del pago al servidor Flask
-            fetch("/pago_completado", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(detalles)
-            }).then(() => {
-                alert("Pago realizado con éxito");
-                window.location.href = "/gracias";
-            });
-
-        });
-    },
-
-    onCancel: function(data) {
-        alert("El pago fue cancelado");
-    }
-
-}).render('#paypal-button-container');
-</script>
-
-
-        <a class="boton-vaciar" href="{{ url_for('vaciar_carrito') }}">Vaciar carrito</a>
+        <!-- BOTÓN VACÍAR -->
+        <a class="boton-vaciar" href="{{ url_for('vaciar_carrito') }}" id="vaciar-carrito">Vaciar carrito</a>
     </div>
 
 </div>
 
-{% endif %}
+
 
 <script>
 function cambiarCantidad(id, accion) {
     fetch(`/actualizar_cantidad/${id}/${accion}`)
     .then(() => location.reload());
 }
+
+// Mostrar PayPal y ocultar botones del carrito
+document.getElementById('finalizar-compra').addEventListener('click', function(e) {
+    e.preventDefault();
+
+    // Ocultar botones de cantidad
+    document.querySelectorAll('.btn-cantidad').forEach(btn => btn.style.display = 'none');
+
+    // Ocultar botón vaciar carrito
+    document.getElementById('vaciar-carrito').style.display = 'none';
+
+    // Ocultar botón finalizar
+    this.style.display = 'none';
+
+    // Mostrar PayPal
+    document.getElementById('paypal-button-container').style.display = 'block';
+
+    
+   
+});
+
+// Configuración de PayPal
+paypal.Buttons({
+    createOrder: function(data, actions) {
+        return actions.order.create({
+            purchase_units: [{ amount: { value: '{{ total }}' } }]
+        });
+    },
+    onApprove: function(data, actions) {
+        return actions.order.capture().then(function(detalles) {
+            fetch("/pago_completado", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ detalles: detalles, recaptchaToken: window.recaptchaToken })
+            }).then(() => {
+                alert("Pago realizado con éxito");
+                window.location.href = "/gracias";
+            });
+        });
+    },
+    onCancel: function(data) {
+        alert("El pago fue cancelado");
+    }
+}).render('#paypal-button-container');
 </script>
 
+{% endif %}
 {% endblock %}
