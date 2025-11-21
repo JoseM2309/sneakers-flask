@@ -25,7 +25,7 @@ def get_db_connection():
     conn = psycopg2.connect(
         host="dpg-d4fbdtodl3ps73cr042g-a.oregon-postgres.render.com",
         database="sneakers_db_g0p6",
-        user="postgres",
+        user="sneakers_db_g0p6_user",
         password="upV4O9iC3ATKiIWKPpV657s9Qg1nlrZL",
         port="5432",
         sslmode="require"
