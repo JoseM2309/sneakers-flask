@@ -2,7 +2,6 @@ from flask import Flask, render_template, request, session, redirect, url_for, j
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
 import psycopg2
-import requests
 
 app = Flask(__name__)
 app.secret_key = "sneakersmx_secret_key"
@@ -84,36 +83,12 @@ def load_user(user_id):
 
 
 # ==============================
-# RECAPTCHA KEYS
-# ==============================
-RECAPTCHA_SITE_KEY = "6LdMRxMsAAAAAK4tny01N3p-myiD9-hVAJwkZxge"
-RECAPTCHA_SECRET_KEY = "6LdMRxMsAAAAACpx-REU610dCMhrexfX7kuVsc6z"
-
-
-# ==============================
-# REGISTRO (con reCAPTCHA)
+# REGISTRO (SIN CAPTCHA)
 # ==============================
 @app.route('/registro', methods=['GET', 'POST'])
 def registro():
 
     if request.method == 'POST':
-
-        # VALIDAR CAPTCHA
-        token = request.form.get("g-recaptcha-response")
-        if not token:
-            flash("Por favor completa el CAPTCHA.", "error")
-            return redirect(url_for("registro"))
-
-        verify = requests.post(
-            "https://www.google.com/recaptcha/api/siteverify",
-            data={"secret": RECAPTCHA_SECRET_KEY, "response": token}
-        ).json()
-
-        if not verify.get("success"):
-            flash("Captcha incorrecto.", "error")
-            return redirect(url_for("registro"))
-
-        # DATOS DEL FORM
         nombre = request.form.get('nombre', '').strip()
         email = request.form.get('email', '').strip().lower()
         password = request.form.get('password')
@@ -153,7 +128,7 @@ def registro():
 
         return redirect(url_for('login'))
 
-    return render_template("registro.html", site_key=RECAPTCHA_SITE_KEY)
+    return render_template("registro.html")
 
 
 # ==============================
@@ -247,6 +222,38 @@ def productos():
 # ==============================
 # CARRITO
 # ==============================
+@app.route('/agregar_carrito/<int:id>')
+def agregar_carrito(id):
+    conn = get_db_connection()
+    if not conn:
+        return jsonify({"error": "Error DB"}), 500
+
+    cur = conn.cursor()
+    cur.execute("SELECT id, nombre, precio, imagen FROM productos WHERE id=%s", (id,))
+    fila = cur.fetchone()
+    cur.close()
+    conn.close()
+
+    if fila:
+        carrito = session.get('carrito', [])
+        encontrado = next((p for p in carrito if p['id'] == fila[0]), None)
+
+        if encontrado:
+            encontrado['cantidad'] += 1
+        else:
+            carrito.append({
+                "id": fila[0],
+                "nombre": fila[1],
+                "precio": float(fila[2]),
+                "imagen": fila[3],
+                "cantidad": 1
+            })
+
+        session['carrito'] = carrito
+
+    return jsonify({"mensaje": "agregado"})
+
+
 @app.route('/carrito')
 def carrito():
     carrito = session.get('carrito', [])
@@ -259,28 +266,47 @@ def carrito():
         carrito=carrito,
         subtotal=subtotal,
         envio=envio,
-        total=total,
-        site_key=RECAPTCHA_SITE_KEY
+        total=total
     )
 
 
+@app.route('/actualizar_cantidad/<int:id>/<string:accion>')
+def actualizar_cantidad(id, accion):
+    carrito = session.get('carrito', [])
+    for item in carrito:
+        if item['id'] == id:
+            if accion == "sumar":
+                item['cantidad'] += 1
+            elif accion == "restar":
+                item['cantidad'] -= 1
+                if item['cantidad'] <= 0:
+                    carrito = [p for p in carrito if p['id'] != id]
+            break
+    session['carrito'] = carrito
+    return ("", 204)
+
+
+@app.route('/vaciar_carrito')
+def vaciar_carrito():
+    session['carrito'] = []
+    return redirect(url_for('carrito'))
+
+
+@app.route('/eliminar_carrito/<int:id>')
+def eliminar_carrito(id):
+    carrito = session.get('carrito', [])
+    carrito = [item for item in carrito if item['id'] != id]
+    session['carrito'] = carrito
+    return redirect(url_for('carrito'))
+
+
 # ==============================
-# PAGO (reCAPTCHA)
+# PAGO SIMPLE (SIN CAPTCHA)
 # ==============================
 @app.post("/pago_completado")
 def pago_completado():
     data = request.get_json()
-    token = data.get("recaptchaToken")
-
-    verificar = requests.post(
-        "https://www.google.com/recaptcha/api/siteverify",
-        data={"secret": RECAPTCHA_SECRET_KEY, "response": token}
-    ).json()
-
-    if not verificar.get("success"):
-        return jsonify({"error": "Captcha inválido"}), 400
-
-    print("PAGO:", data)
+    print("PAGO RECIBIDO:", data)
     session["carrito"] = []
     return jsonify({"status": "ok"})
 
