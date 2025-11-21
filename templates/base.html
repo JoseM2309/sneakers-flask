@@ -17,6 +17,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 </head>
+
 <body class="bg-white text-gray-900">
 
 <!-- NAVBAR PRINCIPAL -->
@@ -27,7 +28,7 @@
         👟 <span class="ml-2">SneakersMX</span>
     </a>
 
-    <!-- LINKS DEL MENÚ (versión escritorio) -->
+    <!-- MENÚ ESCRITORIO -->
     <nav class="nav-links hidden md:flex gap-8 text-lg">
         <a href="{{ url_for('index') }}" class="hover:text-orange-500 transition">Inicio</a>
         <a href="{{ url_for('productos') }}" class="hover:text-orange-500 transition">Productos</a>
@@ -35,28 +36,25 @@
         <a href="{{ url_for('contacto') }}" class="hover:text-orange-500 transition">Contacto</a>
     </nav>
 
-    <!-- ICONOS (usuario + carrito) -->
     <div class="flex items-center gap-6">
 
         <!-- Icono usuario -->
         {% if current_user.is_authenticated %}
-    <a href="{{ url_for('logout') }}" class="text-xl text-green-600 font-bold">
-        {{ current_user.nombre }} ✖
-    </a>
-{% else %}
-    <div id="btnUsuario" class="cursor-pointer text-2xl">
-        <i class="fas fa-user"></i>
-    </div>
-{% endif %}
-
+            <a href="{{ url_for('logout') }}" class="text-xl text-green-600 font-bold">
+                {{ current_user.nombre }} ✖
+            </a>
+        {% else %}
+            <div id="btnUsuario" class="cursor-pointer text-2xl">
+                <i class="fas fa-user"></i>
+            </div>
+        {% endif %}
 
         <!-- Icono carrito -->
         <a href="{{ url_for('carrito') }}" class="text-2xl hover:text-orange-500 transition">
             🛒
-            
         </a>
 
-        <!-- Botón menú móvil -->
+        <!-- Menú móvil -->
         <div class="menu-toggle md:hidden cursor-pointer" id="menu-toggle">
             <span class="block w-8 h-1 bg-black mb-1"></span>
             <span class="block w-8 h-1 bg-black mb-1"></span>
@@ -74,8 +72,7 @@
     <a href="{{ url_for('contacto') }}" class="py-2">Contacto</a>
 </nav>
 
-
-<!-- Contenido dinámico -->
+<!-- CONTENIDO -->
 <main>
     {% block content %}{% endblock %}
 </main>
@@ -85,17 +82,9 @@
     <p>&copy; 2025 SneakersMX. Todos los derechos reservados.</p>
 </footer>
 
-<!-- BOTÓN FLOTANTE DEL CARRITO -->
-<button id="btn-ver-carrito"
-    class="fixed bottom-6 right-6 bg-black text-white p-4 rounded-full shadow-lg hover:bg-gray-800 transition"
-    title="Ver carrito">
-    🛒
-</button>
-
 <!-- PANEL DE ACCESIBILIDAD -->
 <div id="accesibilidad-panel" class="accesibilidad-panel">
     <button id="accesibilidad-toggle" title="Herramientas de accesibilidad">🧑‍🦯</button>
-
     <div id="accesibilidad-options" class="accesibilidad-options">
         <h4>Accesibilidad</h4>
         <button onclick="toggleGrayscale()">Escala de grises</button>
@@ -109,68 +98,106 @@
     </div>
 </div>
 
-<!-- CHATBOT -->
-<button id="chatbot-btn" class="chatbot-btn" aria-label="Abrir Chatbot">💬</button>
-
-<div id="chatbot-window" class="chatbot-window">
-    <div class="chatbot-header">
-        <span>Asistente Virtual</span>
-        <button id="chatbot-close">✖</button>
-    </div>
-
-    <div id="chatbot-messages" class="chatbot-messages">
-        <div class="bot-msg">👋 ¡Hola! ¿En qué puedo ayudarte hoy?</div>
-    </div>
-
-    <div class="chatbot-input-container">
-        <input type="text" id="chatbot-input" placeholder="Escribe tu mensaje..." />
-        <button id="chatbot-send">Enviar</button>
-    </div>
-</div>
-
-
-<!-- Modal Login -->
+<!-- MODAL LOGIN -->
 <div id="modalLogin" class="modal-login">
     <div class="modal-contenido">
-
         <span class="cerrar-modal">&times;</span>
-
         <h2>Iniciar Sesión</h2>
-
         <form method="POST" action="{{ url_for('login') }}">
             <input type="email" name="email" placeholder="Correo electrónico" required>
             <input type="password" name="password" placeholder="Contraseña" required>
             <button type="submit" class="btn-login">Entrar</button>
         </form>
-
-        <p>
-            ¿No tienes cuenta?  
+        <p>¿No tienes cuenta?  
             <a href="{{ url_for('registro') }}">Crear cuenta</a>
         </p>
     </div>
 </div>
-<!-- SCRIPTS -->
+
+<!-- BURBUJA CHAT BOT -->
+<div id="chat-bubble" class="fixed bottom-6 right-6 w-16 h-16 bg-gradient-to-br from-orange-500 to-red-500 rounded-full shadow-2xl flex items-center justify-center text-white text-3xl cursor-pointer z-50 transition-transform hover:scale-110">
+    💬
+</div>
+
+<!-- PANEL DE CHAT (inicialmente oculto) -->
+<div id="chatbox" class="fixed bottom-24 right-6 w-80 bg-white border border-gray-300 rounded-2xl shadow-2xl z-50 hidden flex flex-col overflow-hidden transform scale-0 transition-transform duration-300">
+    
+    <!-- CABECERA DEL CHAT -->
+    <div class="bg-gradient-to-r from-orange-500 to-red-500 text-white p-3 flex justify-between items-center">
+        <span>Soporte SneakersMX</span>
+        <button id="close-chat" class="text-white text-lg font-bold">✖</button>
+    </div>
+
+    <!-- MENSAJES -->
+    <div id="messages" class="flex-1 p-3 overflow-y-auto space-y-2 bg-gray-50"></div>
+
+    <!-- OPCIONES -->
+    <div id="options" class="flex flex-wrap gap-2 p-3 border-t border-gray-200 bg-white"></div>
+</div>
+
+<script>
+// ABRIR / CERRAR CHAT CON ANIMACIÓN
+const chatBubble = document.getElementById("chat-bubble");
+const chatbox = document.getElementById("chatbox");
+const closeBtn = document.getElementById("close-chat");
+
+chatBubble.addEventListener("click", () => {
+    chatbox.classList.toggle("hidden");
+    setTimeout(() => chatbox.classList.toggle("scale-0"), 10);
+});
+
+closeBtn.addEventListener("click", () => {
+    chatbox.classList.add("scale-0");
+    setTimeout(() => chatbox.classList.add("hidden"), 300);
+});
+
+// FUNCIONES DEL CHAT
+function showOptions(options) {
+    const optionsDiv = document.getElementById("options");
+    optionsDiv.innerHTML = "";
+    options.forEach(opt => {
+        const btn = document.createElement("button");
+        btn.textContent = opt;
+        btn.className = "bg-gradient-to-br from-orange-400 to-red-400 text-white px-3 py-1 rounded-full hover:from-orange-500 hover:to-red-500 transition-transform hover:scale-105";
+        btn.onclick = () => sendOption(opt);
+        optionsDiv.appendChild(btn);
+    });
+}
+
+async function sendOption(option) {
+    const messagesDiv = document.getElementById("messages");
+    messagesDiv.innerHTML += `<div class="text-right"><span class="inline-block bg-orange-100 text-orange-800 px-3 py-1 rounded-lg">${option}</span></div>`;
+
+    document.getElementById("options").innerHTML = "";
+
+    const res = await fetch("/api/chatbot", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({option: option})
+    });
+
+    const data = await res.json();
+    messagesDiv.innerHTML += `<div class="text-left"><span class="inline-block bg-orange-500 text-white px-3 py-1 rounded-lg">${data.reply}</span></div>`;
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+    if (data.options) showOptions(data.options);
+}
+
+// Iniciar con menú principal
+showOptions(["Precios", "Envíos", "Métodos de pago", "Disponibilidad", "Productos destacados"]);
+</script>
+
 <script>
 document.addEventListener("DOMContentLoaded", () => {
 
-    /* -------------------------------------------
-       MENÚ MÓVIL
-    ------------------------------------------- */
-   /* MENÚ MÓVIL */
-        const toggle = document.getElementById("menu-toggle");
-        const mobileMenu = document.querySelector(".nav-links-mobile");
+    /* MENÚ MÓVIL */
+    const toggle = document.getElementById("menu-toggle");
+    const mobileMenu = document.querySelector(".nav-links-mobile");
+    toggle.addEventListener("click", () => mobileMenu.classList.toggle("active"));
 
-        toggle.addEventListener("click", () => {
-         mobileMenu.classList.toggle("active");
-        });
-
-
-    /* -------------------------------------------
-       ACCESIBILIDAD
-    ------------------------------------------- */
+    /* ACCESIBILIDAD */
     const toggleBtn = document.getElementById('accesibilidad-toggle');
     const options = document.getElementById('accesibilidad-options');
-
     toggleBtn.addEventListener('click', () => options.classList.toggle('show'));
 
     window.toggleGrayscale = () => document.body.classList.toggle('grayscale');
@@ -193,94 +220,32 @@ document.addEventListener("DOMContentLoaded", () => {
     window.togglePointer = () => document.body.classList.toggle('pointer-reader');
     window.toggleNightMode = () => document.body.classList.toggle('night-mode');
 
-    /* -------------------------------------------
-       BOTÓN FLOTANTE DEL CARRITO
-    ------------------------------------------- */
-    document.getElementById("btn-ver-carrito").onclick = () => {
+    /* BOTÓN CARRITO */
+    document.getElementById("btn-ver-carrito")?.addEventListener("click", () => {
         window.location.href = "{{ url_for('carrito') }}";
-    };
-
-    /* -------------------------------------------
-       CHATBOT
-    ------------------------------------------- */
-    const chatbotBtn = document.getElementById("chatbot-btn");
-    const chatbotWindow = document.getElementById("chatbot-window");
-    const chatbotClose = document.getElementById("chatbot-close");
-    const chatbotInput = document.getElementById("chatbot-input");
-    const chatbotSend = document.getElementById("chatbot-send");
-    const chatbotMessages = document.getElementById("chatbot-messages");
-
-    chatbotBtn.addEventListener("click", () => {
-        chatbotWindow.style.display = "flex";
-        chatbotBtn.style.display = "none";
     });
 
-    chatbotClose.addEventListener("click", () => {
-        chatbotWindow.style.display = "none";
-        chatbotBtn.style.display = "block";
-    });
-
-    chatbotSend.addEventListener("click", sendMessage);
-
-    chatbotInput.addEventListener("keypress", e => {
-        if (e.key === "Enter") sendMessage();
-    });
-
-    function sendMessage() {
-        const text = chatbotInput.value.trim();
-        if (!text) return;
-
-        const userMsg = document.createElement("div");
-        userMsg.classList.add("user-msg");
-        userMsg.textContent = text;
-        chatbotMessages.appendChild(userMsg);
-        chatbotInput.value = "";
-
-        setTimeout(() => {
-            const botMsg = document.createElement("div");
-            botMsg.classList.add("bot-msg");
-
-            if (text.toLowerCase().includes("hola")) {
-                botMsg.textContent = "👋 ¡Hola! ¿Buscas algún modelo en especial?";
-            } else if (text.toLowerCase().includes("precio")) {
-                botMsg.textContent = "💸 Tenemos sneakers desde $999 MXN.";
-            } else {
-                botMsg.textContent = "🤖 Puedo ayudarte con productos, precios o envíos.";
-            }
-
-            chatbotMessages.appendChild(botMsg);
-            chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
-        }, 700);
-
-        chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
-    }
 });
 
-/*login*/
-
+/* LOGIN */
 const btnUsuario = document.getElementById("btnUsuario");
-    const modalLogin = document.getElementById("modalLogin");
-    const cerrar = document.querySelector(".cerrar-modal");
+const modalLogin = document.getElementById("modalLogin");
+const cerrar = document.querySelector(".cerrar-modal");
 
-    btnUsuario.addEventListener("click", () => {
-        modalLogin.style.display = "flex";
-    });
+btnUsuario?.addEventListener("click", () => {
+    modalLogin.style.display = "flex";
+});
 
-    cerrar.addEventListener("click", () => {
+cerrar.addEventListener("click", () => {
+    modalLogin.style.display = "none";
+});
+
+window.addEventListener("click", (e) => {
+    if (e.target === modalLogin) {
         modalLogin.style.display = "none";
-    });
-
-    window.addEventListener("click", (e) => {
-        if (e.target === modalLogin) {
-            modalLogin.style.display = "none";
-        }
-    });
-
-
-
+    }
+});
 </script>
-<i id="btnLogin" class="fa-solid fa-user text-white text-2xl cursor-pointer hover:text-yellow-400"></i>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 </body>
 </html>
