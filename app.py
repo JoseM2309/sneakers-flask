@@ -22,10 +22,11 @@ def get_db_connection():
     try:
         conn = psycopg2.connect(
             dbname="sneakers_db_g0p6",
-            user=os.environ["sneakers_db_g0p6_user"],
-            password=os.environ["upV4O9iC3ATKiIWKPpV657s9Qg1nlrZL"],
-            host=os.environ["dpg-d4fbdtodl3ps73cr042g-a.oregon-postgres.render.com"],
-            port=os.environ.get("5432", "5432")
+            user=os.environ.get("sneakers_db_g0p6_user"),
+            password=os.environ.get("upV4O9iC3ATKiIWKPpV657s9Qg1nlrZL"),
+            host=os.environ.get("dpg-d4fbdtodl3ps73cr042g-a.oregon-postgres.render.com"),
+            port=os.environ.get("5432"),
+            sslmode="require"   # Render lo exige
         )
         return conn
     except Exception as e:
