@@ -3,6 +3,7 @@ from flask import Flask, render_template, request, session, redirect, url_for, j
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 import psycopg2
+import requests
 import os
 
 
@@ -309,11 +310,35 @@ def eliminar_carrito(id):
 # ==============================
 @app.route('/contacto', methods=['GET', 'POST'])
 def contacto():
-    if request.method == 'POST':
-        print("Nuevo mensaje:", request.form)
-        return render_template('contacto.html', mensaje_enviado=True)
+    recaptcha_site_key = "6LfgThQsAAAAAKBIskJdPoTp_e9DeehR4fWAOZQc"
+    recaptcha_secret_key = "6LfgThQsAAAAANgjrKYNTDeOT9kwDhWpz2vAqbC4"
 
-    return render_template('contacto.html')
+    if request.method == 'POST':
+        # Obtener token reCAPTCHA del formulario
+        token = request.form.get('g-recaptcha-response')
+
+        # Verificar token con Google
+        response = requests.post(
+            'https://www.google.com/recaptcha/api/siteverify',
+            data={
+                'secret': recaptcha_secret_key,
+                'response': token
+            }
+        )
+        result = response.json()
+
+        if not result.get('success'):
+            flash("reCAPTCHA no verificado. Intenta de nuevo.", "error")
+            return redirect(url_for('contacto'))
+
+        # Procesar el mensaje si reCAPTCHA es válido
+        print("Mensaje recibido:", request.form)
+        flash("Mensaje enviado con éxito", "success")
+        return render_template('contacto.html', mensaje_enviado=True, recaptcha_site_key=recaptcha_site_key)
+
+    # GET
+    return render_template('contacto.html', recaptcha_site_key=recaptcha_site_key)
+
 
 
 
