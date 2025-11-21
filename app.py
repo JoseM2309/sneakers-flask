@@ -19,14 +19,18 @@ login_manager.login_view = "login"
 # CONEXIÓN A BD
 # ==============================
 def get_db_connection():
-    conn = psycopg2.connect(
-        dbname="sneakers",
-        user="alfredo",
-        password="12345",
-        host="localhost",
-        port="5432"
-    )
-    return conn
+    try:
+        conn = psycopg2.connect(
+            dbname=os.environ["sneakers_db_g0p6"],
+            user=os.environ["sneakers_db_g0p6_user"],
+            password=os.environ["upV4O9iC3ATKiIWKPpV657s9Qg1nlrZL"],
+            host=os.environ["dpg-d4fbdtodl3ps73cr042g-a.oregon-postgres.render.com"],
+            port=os.environ.get("5432", "5432")
+        )
+        return conn
+    except Exception as e:
+        print("Error conectando a la DB:", e)
+        return None
 
 
 # ==============================
