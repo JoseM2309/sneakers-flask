@@ -331,14 +331,27 @@ def contacto():
             flash("reCAPTCHA no verificado. Intenta de nuevo.", "error")
             return redirect(url_for('contacto'))
 
-        # Procesar el mensaje si reCAPTCHA es válido
-        print("Mensaje recibido:", request.form)
+        # Obtener datos del formulario
+        nombre = request.form.get('nombre')
+        email = request.form.get('email')
+        mensaje = request.form.get('mensaje')
+
+        # Guardar en la base de datos PostgreSQL
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            INSERT INTO mensajes_contacto (nombre, email, mensaje)
+            VALUES (%s, %s, %s)
+        """, (nombre, email, mensaje))
+        conn.commit()
+        cur.close()
+        conn.close()
+
         flash("Mensaje enviado con éxito", "success")
         return render_template('contacto.html', mensaje_enviado=True, recaptcha_site_key=recaptcha_site_key)
 
     # GET
     return render_template('contacto.html', recaptcha_site_key=recaptcha_site_key)
-
 
 
 
