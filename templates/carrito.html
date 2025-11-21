@@ -72,7 +72,8 @@
 
 </div>
 
-
+<!-- SDK de PayPal -->
+<script src="https://www.paypal.com/sdk/js?client-id=Ad0oaK7LOa0ypSndiJ9q7tM3acExIZm8IRX95Y2_KptuF-pzGT_NcJ6KNJ6n2vy5CODsUG4oHk8S3xy1&currency=MXN"></script>
 
 <script>
 function cambiarCantidad(id, accion) {
@@ -95,16 +96,17 @@ document.getElementById('finalizar-compra').addEventListener('click', function(e
 
     // Mostrar PayPal
     document.getElementById('paypal-button-container').style.display = 'block';
-
-    
-   
 });
 
 // Configuración de PayPal
 paypal.Buttons({
     createOrder: function(data, actions) {
         return actions.order.create({
-            purchase_units: [{ amount: { value: '{{ total }}' } }]
+            purchase_units: [{
+                amount: {
+                    value: '{{ total }}'
+                }
+            }]
         });
     },
     onApprove: function(data, actions) {
@@ -112,7 +114,7 @@ paypal.Buttons({
             fetch("/pago_completado", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ detalles: detalles, recaptchaToken: window.recaptchaToken })
+                body: JSON.stringify({ detalles: detalles })
             }).then(() => {
                 alert("Pago realizado con éxito");
                 window.location.href = "/gracias";
@@ -121,9 +123,14 @@ paypal.Buttons({
     },
     onCancel: function(data) {
         alert("El pago fue cancelado");
+    },
+    onError: function(err) {
+        console.error(err);
+        alert("Ocurrió un error en el pago, intenta nuevamente.");
     }
 }).render('#paypal-button-container');
 </script>
 
 {% endif %}
 {% endblock %}
+
