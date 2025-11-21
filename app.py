@@ -23,13 +23,15 @@ login_manager.login_view = "login"
 # ==============================
 def get_db_connection():
     conn = psycopg2.connect(
-        dbname="sneakers_db_g0p6",
+        host="dpg-d4fbdtodl3ps73cr042g-a.oregon-postgres.render.com",
+        database="sneakers_db_g0p6",
         user="postgres",
         password="upV4O9iC3ATKiIWKPpV657s9Qg1nlrZL",
-        host="dpg-d4fbdtodl3ps73cr042g-a.oregon-postgres.render.com ",
-        port="5432"
+        port="5432",
+        sslmode="require"
     )
     return conn
+
 
 
 # ==============================
