@@ -316,6 +316,85 @@ def contacto():
     return render_template('contacto.html')
 
 
+
+
+# ==============================
+# CHATBOT BASADO EN OPCIONES
+# ==============================
+from flask import session
+
+# Definimos el menú y subopciones
+chat_menu = {
+    "inicio": {
+        "Precios": "Consulta los precios de nuestros productos.",
+        "Envíos": "Información sobre envíos y tiempos de entrega.",
+        "Métodos de pago": "Aceptamos tarjetas, PayPal y transferencia bancaria.",
+        "Disponibilidad": "Verifica si un producto está disponible.",
+        "Productos destacados": "Aquí están nuestros productos más populares."
+    },
+    # Subopciones de Precios
+    "Precios": ["Tallas", "Modelos", "Inicio"],
+    # Subopciones de Envíos
+    "Envíos": ["México", "Internacional", "Inicio"],
+    # Subopciones de Métodos de pago
+    "Métodos de pago": ["Tarjeta", "PayPal", "Transferencia", "Inicio"],
+    # Subopciones de Disponibilidad
+    "Disponibilidad": ["AirMax", "Jordan", "React", "Inicio"],
+    # Subopciones de Productos destacados
+    "Productos destacados": ["AirMax", "Jordan", "React", "Inicio"]
+}
+
+@app.route("/api/chatbot", methods=["POST"])
+def api_chatbot():
+    data = request.get_json()
+    option = data.get("option")
+
+    # MENÚ PRINCIPAL
+    if option in chat_menu["inicio"]:
+        reply = chat_menu["inicio"][option]
+        options = chat_menu.get(option, ["Inicio"])
+        if option == "Productos destacados":
+            reply += "\nHaz clic en el producto para verlo."
+        return jsonify({"reply": reply, "options": options})
+
+    # SUBOPCIONES DE PRECIOS
+    if option == "Tallas":
+        return jsonify({"reply": "Disponemos de tallas del 24 al 30.", "options": ["Precios", "Inicio"]})
+    if option == "Modelos":
+        return jsonify({"reply": "Tenemos modelos AirMax, Jordan y React.", "options": ["Precios", "Inicio"]})
+
+    # SUBOPCIONES DE ENVÍOS
+    if option == "México":
+        return jsonify({"reply": "Los envíos dentro de México tardan 2-5 días hábiles.", "options": ["Envíos", "Inicio"]})
+    if option == "Internacional":
+        return jsonify({"reply": "Los envíos internacionales tardan 7-15 días hábiles.", "options": ["Envíos", "Inicio"]})
+
+    # SUBOPCIONES DE MÉTODOS DE PAGO
+    if option == "Tarjeta":
+        return jsonify({"reply": "Aceptamos Visa, Mastercard y American Express.", "options": ["Métodos de pago", "Inicio"]})
+    if option == "PayPal":
+        return jsonify({"reply": "Puedes pagar de forma segura con PayPal.", "options": ["Métodos de pago", "Inicio"]})
+    if option == "Transferencia":
+        return jsonify({"reply": "También aceptamos transferencias bancarias.", "options": ["Métodos de pago", "Inicio"]})
+
+    # SUBOPCIONES DE DISPONIBILIDAD
+    if option in ["AirMax", "Jordan", "React"]:
+        return jsonify({
+            "reply": f"Puedes ver los {option} aquí: /productos{option}",
+            "options": ["Disponibilidad", "Inicio"]
+        })
+
+    # REGRESAR AL MENÚ PRINCIPAL
+    if option == "Inicio":
+        return jsonify({"reply": "Menú principal:", "options": list(chat_menu["inicio"].keys())})
+
+    # OPCIÓN NO RECONOCIDA
+    return jsonify({"reply": "Opción no reconocida 😅", "options": ["Inicio"]})
+
+
+
+
+
 # ==============================
 # RUN SERVER
 # ==============================
