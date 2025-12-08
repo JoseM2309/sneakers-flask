@@ -363,15 +363,16 @@ def contacto():
 
 
 
-# ==============================
-# CHATBOT BASADO EN OPCIONES
-# ==============================
-from flask import session
+from flask import Flask, request, jsonify
 
-# Definimos el menú y subopciones
+app = Flask(__name__)
+
+# ==============================
+# MENÚ PRINCIPAL Y SUBOPCIONES
+# ==============================
 chat_menu = {
     "inicio": {
-        "Precios": "Consulta los precios de nuestros productos.",
+        "Precios": "Consulta los precios de nuestros productos de manera rápida.",
         "Envíos": "Información sobre envíos y tiempos de entrega.",
         "Métodos de pago": "Aceptamos tarjetas, PayPal y transferencia bancaria.",
         "Disponibilidad": "Verifica si un producto está disponible.",
@@ -389,6 +390,9 @@ chat_menu = {
     "Productos destacados": ["AirMax", "Jordan", "React", "Inicio"]
 }
 
+# ==============================
+# API CHATBOT
+# ==============================
 @app.route("/api/chatbot", methods=["POST"])
 def api_chatbot():
     data = request.get_json()
@@ -404,28 +408,49 @@ def api_chatbot():
 
     # SUBOPCIONES DE PRECIOS
     if option == "Tallas":
-        return jsonify({"reply": "Disponemos de tallas del 24 al 30.", "options": ["Precios", "Inicio"]})
+        return jsonify({
+            "reply": "Disponemos de tallas del 24 al 30 para todos los modelos.",
+            "options": ["Precios", "Inicio"]
+        })
     if option == "Modelos":
-        return jsonify({"reply": "Tenemos modelos AirMax, Jordan y React.", "options": ["Precios", "Inicio"]})
+        return jsonify({
+            "reply": "Tenemos modelos AirMax, Jordan y React disponibles.",
+            "options": ["Precios", "Inicio"]
+        })
 
     # SUBOPCIONES DE ENVÍOS
     if option == "México":
-        return jsonify({"reply": "Los envíos dentro de México tardan 2-5 días hábiles.", "options": ["Envíos", "Inicio"]})
+        return jsonify({
+            "reply": "Los envíos dentro de México tardan 2-5 días hábiles.",
+            "options": ["Envíos", "Inicio"]
+        })
     if option == "Internacional":
-        return jsonify({"reply": "Los envíos internacionales tardan 7-15 días hábiles.", "options": ["Envíos", "Inicio"]})
+        return jsonify({
+            "reply": "Los envíos internacionales tardan 7-15 días hábiles.",
+            "options": ["Envíos", "Inicio"]
+        })
 
     # SUBOPCIONES DE MÉTODOS DE PAGO
     if option == "Tarjeta":
-        return jsonify({"reply": "Aceptamos Visa, Mastercard y American Express.", "options": ["Métodos de pago", "Inicio"]})
+        return jsonify({
+            "reply": "Aceptamos Visa, Mastercard y American Express.",
+            "options": ["Métodos de pago", "Inicio"]
+        })
     if option == "PayPal":
-        return jsonify({"reply": "Puedes pagar de forma segura con PayPal.", "options": ["Métodos de pago", "Inicio"]})
+        return jsonify({
+            "reply": "Puedes pagar de forma segura con PayPal.",
+            "options": ["Métodos de pago", "Inicio"]
+        })
     if option == "Transferencia":
-        return jsonify({"reply": "También aceptamos transferencias bancarias.", "options": ["Métodos de pago", "Inicio"]})
+        return jsonify({
+            "reply": "También aceptamos transferencias bancarias.",
+            "options": ["Métodos de pago", "Inicio"]
+        })
 
     # SUBOPCIONES DE DISPONIBILIDAD
     if option in ["AirMax", "Jordan", "React"]:
         return jsonify({
-            "reply": f"Puedes ver los {option} aquí: /productos{option}",
+            "reply": f"Puedes ver los {option} aquí: /productos/{option}",
             "options": ["Disponibilidad", "Inicio"]
         })
 
@@ -434,7 +459,12 @@ def api_chatbot():
         return jsonify({"reply": "Menú principal:", "options": list(chat_menu["inicio"].keys())})
 
     # OPCIÓN NO RECONOCIDA
-    return jsonify({"reply": "Opción no reconocida 😅", "options": ["Inicio"]})
+    return jsonify({"reply": "Opción no reconocida 😅 Por favor elige una opción del menú.", 
+                    "options": ["Inicio"]})
+
+if __name__ == "__main__":
+    app.run(debug=True)
+
 
 
 
