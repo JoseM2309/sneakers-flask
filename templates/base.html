@@ -152,30 +152,53 @@ document.getElementById("menu-toggle")?.addEventListener("click", () => {
     document.querySelector(".nav-links-mobile").classList.toggle("active");
 });
 
-// ACCESIBILIDAD
 document.addEventListener("DOMContentLoaded", () => {
     const toggleBtn = document.getElementById('accesibilidad-toggle');
     const options = document.getElementById('accesibilidad-options');
     toggleBtn.addEventListener('click', () => options.classList.toggle('show'));
 
+    // Variables para tamaños dinámicos
+    let currentFontSize = parseFloat(getComputedStyle(document.body).fontSize);
+    let currentCursorSize = 16; // px, puedes ajustar valor inicial
+
+    // ======== FUNCIONES ACCESIBILIDAD ========
     window.toggleGrayscale = () => document.body.classList.toggle('grayscale');
+
     window.toggleContrast = () => document.body.classList.toggle('high-contrast');
+
     window.increaseText = () => {
-        let size = parseFloat(getComputedStyle(document.body).fontSize);
-        document.body.style.fontSize = (size + 2) + 'px';
+        currentFontSize += 2;
+        document.body.style.fontSize = currentFontSize + 'px';
     };
+
     window.decreaseText = () => {
-        let size = parseFloat(getComputedStyle(document.body).fontSize);
-        document.body.style.fontSize = (size - 2) + 'px';
+        currentFontSize = Math.max(12, currentFontSize - 2); // no menor a 12px
+        document.body.style.fontSize = currentFontSize + 'px';
     };
+
     window.changeFont = () => {
         document.body.style.fontFamily =
             document.body.style.fontFamily === 'Courier New, monospace'
             ? 'Montserrat, sans-serif'
             : 'Courier New, monospace';
     };
-    window.increaseCursor = () => document.body.classList.toggle('large-cursor');
+
+    // ===== CURSOR =====
+    window.increaseCursor = () => {
+        currentCursorSize += 4;
+        document.body.style.setProperty('--cursor-size', currentCursorSize + 'px');
+        document.body.style.cursor = `url('cursor.png') ${currentCursorSize} ${currentCursorSize}, auto`;
+    };
+
+    window.decreaseCursor = () => {
+        currentCursorSize = Math.max(8, currentCursorSize - 4); // no menor a 8px
+        document.body.style.setProperty('--cursor-size', currentCursorSize + 'px');
+        document.body.style.cursor = `url('cursor.png') ${currentCursorSize} ${currentCursorSize}, auto`;
+    };
+
     window.togglePointer = () => document.body.classList.toggle('pointer-reader');
+
+    // ===== MODO NOCTURNO =====
     window.toggleNightMode = () => document.body.classList.toggle('night-mode');
 });
 
