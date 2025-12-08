@@ -152,14 +152,7 @@ document.getElementById("menu-toggle")?.addEventListener("click", () => {
     document.querySelector(".nav-links-mobile").classList.toggle("active");
 });
 
-document.addEventListener("DOMContentLoaded", () => {
-    const toggleBtn = document.getElementById('accesibilidad-toggle');
-    const options = document.getElementById('accesibilidad-options');
-    toggleBtn.addEventListener('click', () => options.classList.toggle('show'));
 
-    // Variables para tamaños dinámicos
-    let currentFontSize = parseFloat(getComputedStyle(document.body).fontSize);
-    let currentCursorSize = 16; // px, puedes ajustar valor inicial
 // ACCESIBILIDAD
 document.addEventListener("DOMContentLoaded", () => {
     const toggleBtn = document.getElementById('accesibilidad-toggle');
@@ -186,6 +179,7 @@ document.addEventListener("DOMContentLoaded", () => {
     window.togglePointer = () => document.body.classList.toggle('pointer-reader');
     window.toggleNightMode = () => document.body.classList.toggle('night-mode');
 });
+
 // BOTÓN LOGIN
 const btnUsuario = document.getElementById("btnUsuario");
 const modalLogin = document.getElementById("modalLogin");
