@@ -325,7 +325,7 @@ body {
 /* Botón flotante */
 #accesibilidad-toggle {
     position: fixed;
-    bottom: 20px;
+    bottom: 80px;
     right: 20px;
     z-index: 99999;
     background: #007bff;
