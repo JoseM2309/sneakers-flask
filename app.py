@@ -379,7 +379,7 @@ def contacto():
     return render_template("contacto.html", recaptcha_site_key=recaptcha_site_key)
 
 # ==============================
-# MENÚ CHATBOT
+# MENÚ CHATBOT MEJORADO
 # ==============================
 chat_menu = {
     "inicio": {
@@ -396,59 +396,90 @@ chat_menu = {
     "Productos destacados": ["AirMax", "Jordan", "React", "Inicio"]
 }
 
+# Palabras clave para respuestas dinámicas
+keywords = {
+    "precio": "Precios",
+    "coste": "Precios",
+    "envío": "Envíos",
+    "entrega": "Envíos",
+    "pago": "Métodos de pago",
+    "tarjeta": "Métodos de pago",
+    "paypal": "Métodos de pago",
+    "transferencia": "Métodos de pago",
+    "disponible": "Disponibilidad",
+    "productos": "Productos destacados",
+    "airmax": "AirMax",
+    "jordan": "Jordan",
+    "react": "React",
+    "inicio": "Inicio"
+}
+
 # ==============================
-# API CHATBOT
+# API CHATBOT MEJORADO
 # ==============================
 @app.route("/api/chatbot", methods=["POST"])
 def api_chatbot():
     data = request.get_json()
-    option = data.get("option")
+    user_input = data.get("option", "").lower()
 
-    if option in chat_menu["inicio"]:
-        reply = chat_menu["inicio"][option]
-        options = chat_menu.get(option, ["Inicio"])
-        if option == "Productos destacados":
-            reply += "\nHaz clic en el producto para verlo."
-        return jsonify({"reply": reply, "options": options})
+    # Buscar palabras clave en la entrada del usuario
+    matched_option = None
+    for key, option in keywords.items():
+        if key in user_input:
+            matched_option = option
+            break
 
-    if option == "Tallas":
-        return jsonify({"reply": "Disponemos de tallas del 24 al 30 para todos los modelos.", 
-                        "options": ["Precios", "Inicio"]})
+    # Si encuentra una opción válida
+    if matched_option:
+        if matched_option in chat_menu["inicio"]:
+            reply = chat_menu["inicio"][matched_option]
+            options = chat_menu.get(matched_option, ["Inicio"])
+            if matched_option == "Productos destacados":
+                reply += "\nHaz clic en el producto para verlo."
+            return jsonify({"reply": reply, "options": options})
 
-    if option == "Modelos":
-        return jsonify({"reply": "Tenemos modelos AirMax, Jordan y React disponibles.", 
-                        "options": ["Precios", "Inicio"]})
+        if matched_option == "Tallas":
+            return jsonify({"reply": "Disponemos de tallas del 24 al 30 para todos los modelos.", 
+                            "options": ["Precios", "Inicio"]})
 
-    if option == "México":
-        return jsonify({"reply": "Los envíos dentro de México tardan 2-5 días hábiles.", 
-                        "options": ["Envíos", "Inicio"]})
+        if matched_option == "Modelos":
+            return jsonify({"reply": "Tenemos modelos AirMax, Jordan y React disponibles.", 
+                            "options": ["Precios", "Inicio"]})
 
-    if option == "Internacional":
-        return jsonify({"reply": "Los envíos internacionales tardan 7-15 días hábiles.", 
-                        "options": ["Envíos", "Inicio"]})
+        if matched_option == "México":
+            return jsonify({"reply": "Los envíos dentro de México tardan 2-5 días hábiles.", 
+                            "options": ["Envíos", "Inicio"]})
 
-    if option == "Tarjeta":
-        return jsonify({"reply": "Aceptamos Visa, Mastercard y American Express.", 
-                        "options": ["Métodos de pago", "Inicio"]})
+        if matched_option == "Internacional":
+            return jsonify({"reply": "Los envíos internacionales tardan 7-15 días hábiles.", 
+                            "options": ["Envíos", "Inicio"]})
 
-    if option == "PayPal":
-        return jsonify({"reply": "Puedes pagar de forma segura con PayPal.", 
-                        "options": ["Métodos de pago", "Inicio"]})
+        if matched_option == "Tarjeta":
+            return jsonify({"reply": "Aceptamos Visa, Mastercard y American Express.", 
+                            "options": ["Métodos de pago", "Inicio"]})
 
-    if option == "Transferencia":
-        return jsonify({"reply": "También aceptamos transferencias bancarias.", 
-                        "options": ["Métodos de pago", "Inicio"]})
+        if matched_option == "PayPal":
+            return jsonify({"reply": "Puedes pagar de forma segura con PayPal.", 
+                            "options": ["Métodos de pago", "Inicio"]})
 
-    if option in ["AirMax", "Jordan", "React"]:
-        return jsonify({"reply": f"Puedes ver los {option} aquí: /productos/{option}", 
-                        "options": ["Disponibilidad", "Inicio"]})
+        if matched_option == "Transferencia":
+            return jsonify({"reply": "También aceptamos transferencias bancarias.", 
+                            "options": ["Métodos de pago", "Inicio"]})
 
-    if option == "Inicio":
-        return jsonify({"reply": "Menú principal:", 
-                        "options": list(chat_menu["inicio"].keys())})
+        if matched_option in ["AirMax", "Jordan", "React"]:
+            return jsonify({"reply": f"Puedes ver los {matched_option} aquí: /productos/{matched_option}", 
+                            "options": ["Disponibilidad", "Inicio"]})
 
-    return jsonify({"reply": "Opción no reconocida 😅 Por favor elige una opción del menú.", 
-                    "options": ["Inicio"]})
+        if matched_option == "Inicio":
+            return jsonify({"reply": "Menú principal:", 
+                            "options": list(chat_menu["inicio"].keys())})
+
+    # Si no encuentra coincidencias
+    return jsonify({
+        "reply": "No entendí tu mensaje 😅 Por favor elige una opción del menú o escribe otra cosa.",
+        "options": list(chat_menu["inicio"].keys())
+    })
+
 
 # ==============================
 # PAGO COMPLETADO
