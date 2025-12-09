@@ -61,6 +61,39 @@
     transition: 0.1s;
 }
 
+
+        /* ============================================
+   ACCESIBILIDAD — PROTECCIÓN DEL PANEL
+   ============================================ */
+
+/* Mantener botón y panel siempre visibles */
+#accesibilidad-toggle,
+#accesibilidad-options {
+    position: fixed !important;
+    z-index: 99999 !important;
+}
+
+/* Evitar que los modos visuales modifiquen el panel */
+.grayscale #accesibilidad-toggle,
+.grayscale #accesibilidad-options,
+.high-contrast #accesibilidad-toggle,
+.high-contrast #accesibilidad-options,
+.night-mode #accesibilidad-toggle,
+.night-mode #accesibilidad-options {
+    filter: none !important;
+    background-color: #fff !important;
+    color: #000 !important;
+}
+
+/* Mantener visible y legible el menú */
+#accesibilidad-options {
+    background: white !important;
+    border: 2px solid black !important;
+    padding: 10px;
+    border-radius: 10px;
+}
+
+
         
     </style>
 </head>
