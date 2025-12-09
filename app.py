@@ -109,6 +109,36 @@ def login():
 
     return render_template("login.html")
 
+@app.route('/registro', methods=['GET', 'POST'])
+def registro():
+    if request.method == 'POST':
+        nombre = request.form.get('nombre')
+        email = request.form.get('email').strip().lower()
+        password = request.form.get('password')
+
+        # Revisar si ya existe
+        usuario = obtener_usuario_por_email(email)
+        if usuario:
+            flash("El correo ya está registrado.", "error")
+            return redirect(url_for('registro'))
+
+        # Guardar usuario
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            INSERT INTO usuarios (nombre, email, password)
+            VALUES (%s, %s, %s)
+        """, (nombre, email, generate_password_hash(password)))
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        flash("Registro exitoso. Ahora puedes iniciar sesión.", "success")
+        return redirect(url_for('login'))
+
+    return render_template("registro.html")
+
+
 # ==============================
 # LOGOUT
 # ==============================
