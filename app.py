@@ -116,29 +116,20 @@ def registro():
 
     return render_template("registro.html")
 
-# ==============================
-# LOGIN
-# ==============================
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    print("prueba")
+    print("🚀 Ruta /login sí se está ejecutando")
+
     if request.method == 'POST':
-        email = request.form.get('email').strip().lower()
-        password = request.form.get('password')
+        print("📩 POST recibido")
+        print("Email:", request.form.get('email'))
+        print("Password:", request.form.get('password'))
 
-        usuario = obtener_usuario_por_email(email)
-
-        if usuario and check_password_hash(usuario.password_hash, password):
-            login_user(usuario)
-            flash(f"Bienvenido {usuario.nombre}!", "success")
-
-            next_page = request.args.get('next')
-            return redirect(next_page or url_for('index'))
-        else:
-            flash("Correo o contraseña incorrectos.", "error")
-            return redirect(url_for('login'))
+        flash("POST recibido", "success")
+        return redirect('/login')
 
     return render_template("login.html")
+
 
 # ==============================
 # LOGOUT
