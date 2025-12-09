@@ -79,97 +79,11 @@ def load_user(user_id):
     return obtener_usuario_por_id(user_id)
 
 # ==============================
-# LOGIN
+# RUTAS PRINCIPALES
 # ==============================
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    recaptcha_secret_key = "6LcH8CUsAAAAACWvVURLaTuluhccnFkGH8Tf7c_-"
-
-    if request.method == 'POST':
-        email = request.form.get('email')
-        password = request.form.get('password')
-        token = request.form.get('g-recaptcha-response')  # Captura token
-
-        if not token:
-            flash("Por favor, verifica el reCAPTCHA.", "error")
-            return redirect(url_for('login'))
-
-        try:
-            response = requests.post(
-                "https://www.google.com/recaptcha/api/siteverify",
-                data={"secret": recaptcha_secret_key, "response": token},
-                timeout=5
-            )
-            result = response.json()
-        except Exception as e:
-            flash("Error al verificar reCAPTCHA. Intenta de nuevo.", "error")
-            return redirect(url_for('login'))
-
-        if not result.get("success"):
-            flash("reCAPTCHA no verificado. Intenta de nuevo.", "error")
-            return redirect(url_for('login'))
-
-        if not email or not password:
-            flash("Correo o contraseña incorrectos.", "error")
-            return redirect(url_for('login'))
-
-        email = email.strip().lower()
-        usuario = obtener_usuario_por_email(email)
-
-        if not usuario or not check_password_hash(usuario.password_hash, password):
-            flash("Correo o contraseña incorrectos.", "error")
-            return redirect(url_for('login'))
-
-        login_user(usuario)
-        flash(f"Bienvenido {usuario.nombre}!", "success")
-        return redirect(url_for('index'))
-
-    recaptcha_site_key = "6LcH8CUsAAAAADZ49CVB5T1W9_Z4AiYElGbbqkeU"
-    return render_template("login.html", recaptcha_site_key=recaptcha_site_key)
-
-
-@app.route('/registro', methods=['GET', 'POST'])
-def registro():
-    if request.method == 'POST':
-        nombre = request.form.get('nombre')
-        email = request.form.get('email').strip().lower()
-        password = request.form.get('password')
-
-        usuario = obtener_usuario_por_email(email)
-        if usuario:
-            flash("El correo ya está registrado.", "error")
-            return redirect(url_for('registro'))
-
-        conn = get_db_connection()
-        cur = conn.cursor()
-        cur.execute("INSERT INTO usuarios (nombre, email, password) VALUES (%s,%s,%s)",
-                    (nombre, email, generate_password_hash(password)))
-        conn.commit()
-        cur.close()
-        conn.close()
-
-        flash("Registro exitoso. Ahora puedes iniciar sesión.", "success")
-        return redirect(url_for('login'))
-
-    return render_template("registro.html")
-
-
-@app.route('/logout')
-@login_required
-def logout():
-    logout_user()
-    return redirect(url_for('index'))
-
-
 @app.route('/')
 def index():
     return render_template('index.html')
-
-
-@app.route('/conocenos')
-def conocenos():
-    return render_template('conocenos.html')
-
 
 @app.route('/productos')
 def productos():
@@ -186,16 +100,146 @@ def productos():
             WHERE marca_id = %s
         """, (marca_id,))
         productos = cur.fetchall()
-        lista = [{"id": p[0], "nombre": p[1], "descripcion": p[2], "precio": p[3], "imagen": p[4]} for p in productos]
+
+        lista = [
+            {"id": p[0], "nombre": p[1], "descripcion": p[2], "precio": p[3], "imagen": p[4]}
+            for p in productos
+        ]
 
         if lista:
-            productos_por_marca.append({"marca": marca_nombre, "productos": lista})
+            productos_por_marca.append({
+                "marca": marca_nombre,
+                "productos": lista
+            })
 
     cur.close()
     conn.close()
     return render_template("productos.html", productos_por_marca=productos_por_marca)
 
+@app.route('/conocenos')
+def conocenos():
+    return render_template('conocenos.html')
 
+@app.route('/registro', methods=['GET', 'POST'])
+def registro():
+    if request.method == 'POST':
+        nombre = request.form.get('nombre')
+        email = request.form.get('email').strip().lower()
+        password = request.form.get('password')
+
+        usuario = obtener_usuario_por_email(email)
+        if usuario:
+            flash("El correo ya está registrado.", "error")
+            return redirect(url_for('registro'))
+
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            INSERT INTO usuarios (nombre, email, password)
+            VALUES (%s, %s, %s)
+        """, (nombre, email, generate_password_hash(password)))
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        flash("Registro exitoso. Ahora puedes iniciar sesión.", "success")
+        return redirect(url_for('login'))
+
+    return render_template("registro.html")
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    recaptcha_secret_key = "TU_SECRET_KEY"
+    if request.method == 'POST':
+        email = request.form.get('email')
+        password = request.form.get('password')
+        token = request.form.get('g-recaptcha-response')
+
+        if not token:
+            flash("Por favor, verifica el reCAPTCHA.", "error")
+            return redirect(url_for('login'))
+
+        try:
+            response = requests.post(
+                "https://www.google.com/recaptcha/api/siteverify",
+                data={"secret": recaptcha_secret_key, "response": token},
+                timeout=5
+            )
+            result = response.json()
+        except Exception as e:
+            flash("Error al verificar reCAPTCHA.", "error")
+            return redirect(url_for('login'))
+
+        if not result.get("success"):
+            flash("reCAPTCHA no verificado.", "error")
+            return redirect(url_for('login'))
+
+        usuario = obtener_usuario_por_email(email.strip().lower())
+        if not usuario or not check_password_hash(usuario.password_hash, password):
+            flash("Correo o contraseña incorrectos.", "error")
+            return redirect(url_for('login'))
+
+        login_user(usuario)
+        flash(f"Bienvenido {usuario.nombre}!", "success")
+        return redirect(url_for('index'))
+
+    recaptcha_site_key = "TU_SITE_KEY"
+    return render_template("login.html", recaptcha_site_key=recaptcha_site_key)
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('index'))
+
+# ==============================
+# CONTACTO
+# ==============================
+@app.route('/contacto', methods=['GET', 'POST'])
+def contacto():
+    recaptcha_site_key = "TU_SITE_KEY"
+    recaptcha_secret_key = "TU_SECRET_KEY"
+
+    if request.method == 'POST':
+        token = request.form.get('g-recaptcha-response')
+
+        try:
+            response = requests.post(
+                "https://www.google.com/recaptcha/api/siteverify",
+                data={"secret": recaptcha_secret_key, "response": token},
+                timeout=5
+            )
+            result = response.json()
+        except:
+            flash("Error al verificar reCAPTCHA. Intenta de nuevo.", "error")
+            return redirect(url_for('contacto'))
+
+        if not result.get('success'):
+            flash("reCAPTCHA no verificado. Intenta de nuevo.", "error")
+            return redirect(url_for('contacto'))
+
+        nombre = request.form.get('nombre')
+        email = request.form.get('email')
+        mensaje = request.form.get('mensaje')
+
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            INSERT INTO mensajes_contacto (nombre, email, mensaje)
+            VALUES (%s, %s, %s)
+        """, (nombre, email, mensaje))
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        flash("Mensaje enviado con éxito", "success")
+        return render_template('contacto.html', mensaje_enviado=True, recaptcha_site_key=recaptcha_site_key)
+
+    return render_template("contacto.html", recaptcha_site_key=recaptcha_site_key)
+
+# ==============================
+# CARRITO
+# ==============================
 @app.route('/carrito')
 def carrito():
     carrito = session.get('carrito', [])
@@ -204,51 +248,45 @@ def carrito():
     total = subtotal + envio
     return render_template('carrito.html', carrito=carrito, subtotal=subtotal, envio=envio, total=total)
 
+@app.route('/agregar_carrito/<int:id>')
+def agregar_carrito(id):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id, nombre, precio, imagen FROM productos WHERE id=%s", (id,))
+    fila = cur.fetchone()
+    cur.close()
+    conn.close()
 
-# ==============================
-# CHATBOT API (TEXTO LIBRE)
-# ==============================
-chat_menu = {
-    "Precios": "Consulta los precios de nuestros productos.",
-    "Envíos": "Información sobre envíos y tiempos de entrega.",
-    "Métodos de pago": "Aceptamos tarjetas, PayPal y transferencia bancaria.",
-    "Disponibilidad": "Verifica si un producto está disponible.",
-    "Productos destacados": "Nuestros productos más populares: AirMax, Jordan, React."
-}
+    if fila:
+        carrito = session.get('carrito', [])
+        encontrado = next((p for p in carrito if p['id'] == fila[0]), None)
 
-keywords = {
-    "precio": "Precios",
-    "coste": "Precios",
-    "envío": "Envíos",
-    "entrega": "Envíos",
-    "pago": "Métodos de pago",
-    "tarjeta": "Métodos de pago",
-    "paypal": "Métodos de pago",
-    "transferencia": "Métodos de pago",
-    "disponible": "Disponibilidad",
-    "productos": "Productos destacados",
-    "airmax": "Productos destacados",
-    "jordan": "Productos destacados",
-    "react": "Productos destacados"
-}
+        if encontrado:
+            encontrado['cantidad'] += 1
+        else:
+            carrito.append({
+                'id': fila[0],
+                'nombre': fila[1],
+                'precio': float(fila[2]),
+                'imagen': fila[3],
+                'cantidad': 1
+            })
 
-@app.route("/api/chatbot", methods=["POST"])
-def api_chatbot():
-    data = request.get_json()
-    user_input = data.get("option", "").lower()
+        session['carrito'] = carrito
 
-    matched_option = None
-    for key, option in keywords.items():
-        if key in user_input:
-            matched_option = option
-            break
+    return redirect(url_for('carrito'))
 
-    if matched_option:
-        reply = chat_menu.get(matched_option, "Lo siento, no tengo información sobre eso.")
-        return jsonify({"reply": reply})
+@app.route('/vaciar_carrito')
+def vaciar_carrito():
+    session['carrito'] = []
+    return redirect(url_for('carrito'))
 
-    return jsonify({"reply": "No entendí tu mensaje 😅 Por favor escribe otra cosa relacionada con nuestros productos o servicios."})
-
+@app.route('/eliminar_carrito/<int:id>')
+def eliminar_carrito(id):
+    carrito = session.get('carrito', [])
+    carrito = [item for item in carrito if item['id'] != id]
+    session['carrito'] = carrito
+    return redirect(url_for('carrito'))
 
 # ==============================
 # RUN SERVER
