@@ -11,6 +11,8 @@
         body {
             font-family: Arial, sans-serif;
             background: rgba(0,0,0,0.4);
+            margin: 0;
+            padding: 0;
         }
 
         /* Fondo oscuro */
@@ -24,6 +26,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            z-index: 9999; /* SUPERIOR A ACCESIBILIDAD */
         }
 
         /* Caja */
@@ -42,7 +45,7 @@
         }
 
         .modal-box h2 {
-            margin: 0 0 10px;
+            margin: 0 0 15px;
             text-align: center;
         }
 
@@ -52,6 +55,7 @@
             margin: 8px 0;
             border-radius: 6px;
             border: 1px solid #ccc;
+            font-size: 15px;
         }
 
         .modal-box button {
@@ -63,6 +67,7 @@
             border: none;
             cursor: pointer;
             margin-top: 10px;
+            font-size: 15px;
         }
 
         .cerrar {
@@ -70,6 +75,7 @@
             margin-top: 12px;
             cursor: pointer;
             color: #444;
+            font-size: 15px;
         }
 
         /* Flash */
@@ -118,6 +124,10 @@
 
     </div>
 </div>
+
+</body>
+</html>
+
 
 </body>
 </html>
