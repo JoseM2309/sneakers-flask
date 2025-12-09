@@ -95,8 +95,9 @@ def login():
         print("Password recibido:", password)
         print("Token reCAPTCHA:", token)
 
-        
+        # ===============================
         # Verificar reCAPTCHA
+        # ===============================
         if not token:
             flash("Por favor, verifica el reCAPTCHA.", "error")
             return redirect(url_for('login'))
@@ -118,13 +119,14 @@ def login():
             flash("reCAPTCHA no verificado. Intenta de nuevo.", "error")
             return redirect(url_for('login'))
 
-
+        # ===============================
+        # Validar usuario y contraseña
+        # ===============================
         if not email or not password:
             flash("Correo o contraseña incorrectos.", "error")
             return redirect(url_for('login'))
 
         email = email.strip().lower()
-
         usuario = obtener_usuario_por_email(email)
         print("Usuario encontrado:", usuario)
 
@@ -132,7 +134,6 @@ def login():
             flash("Correo o contraseña incorrectos.", "error")
             return redirect(url_for('login'))
 
-        # IMPORTANTE: verifica que tu campo exista
         password_hash = usuario.password_hash if hasattr(usuario, 'password_hash') else usuario.password
 
         if check_password_hash(password_hash, password):
@@ -143,7 +144,11 @@ def login():
             flash("Correo o contraseña incorrectos.", "error")
             return redirect(url_for('login'))
 
-    return render_template("login.html")
+    # ===============================
+    # GET -> renderizar modal login
+    # ===============================
+    recaptcha_site_key = "6LcH8CUsAAAAADZ49CVB5T1W9_Z4AiYElGbbqkeU"
+    return render_template("login.html", recaptcha_site_key=recaptcha_site_key)
 
 
 @app.route('/registro', methods=['GET', 'POST'])
