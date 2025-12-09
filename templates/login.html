@@ -15,7 +15,6 @@
             padding: 0;
         }
 
-        /* Fondo modal */
         .modal-bg {
             position: fixed;
             top: 0;
@@ -23,13 +22,12 @@
             width: 100%;
             height: 100%;
             background: rgba(0,0,0,0.6);
-            display: none; /* oculto por defecto */
+            display: flex;
             justify-content: center;
             align-items: center;
             z-index: 9999;
         }
 
-        /* Caja del modal */
         .modal-box {
             background: white;
             width: 380px;
@@ -78,7 +76,6 @@
             font-size: 15px;
         }
 
-        /* Flash */
         .alert {
             padding: 8px;
             margin-bottom: 12px;
@@ -89,16 +86,13 @@
         .alert-success { background: #d4edda; color: #155724; }
         .alert-error { background: #f8d7da; color: #721c24; }
     </style>
+
+    <!-- reCAPTCHA v2 -->
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </head>
 
 <body>
 
-<!-- Botón que abre el modal -->
-<div id="btnUsuario" onclick="abrirModalLogin()" class="cursor-pointer text-2xl">
-    <i class="fas fa-user"></i>
-</div>
-
-<!-- MODAL LOGIN -->
 <div class="modal-bg" id="modal-login">
     <div class="modal-box">
 
@@ -113,17 +107,19 @@
             {% endif %}
         {% endwith %}
 
-        <form action="{{ url_for('login') }}" method="POST" id="loginForm">
+        <form action="/login" method="POST">
+
             <input type="email" name="email" placeholder="Correo electrónico" required>
             <input type="password" name="password" placeholder="Contraseña" required>
 
-            <!-- Aquí se renderizará reCAPTCHA -->
-            <div id="recaptcha-container" style="margin-top:10px;"></div>
+            <!-- reCAPTCHA v2 -->
+            <div class="g-recaptcha" data-sitekey="6LcH8CUsAAAAADZ49CVB5T1W9_Z4AiYElGbbqkeU"></div>
 
             <button type="submit">Entrar</button>
+
         </form>
 
-        <div class="cerrar" onclick="cerrarModalLogin()">Cancelar</div>
+        <div class="cerrar" onclick="window.location='/'">Cancelar</div>
 
         <div style="text-align:center; margin-top:10px;">
             <a href="/registro">¿No tienes cuenta? Regístrate</a>
@@ -131,36 +127,6 @@
 
     </div>
 </div>
-
-<!-- Script reCAPTCHA v2 -->
-<script src="https://www.google.com/recaptcha/api.js?onload=onloadRecaptcha&render=explicit" async defer></script>
-
-<script>
-let recaptchaWidgetId;
-
-// Función que se ejecuta cuando carga el script reCAPTCHA
-function onloadRecaptcha() {
-    // No hacemos nada hasta abrir el modal
-}
-
-// Abrir modal y renderizar reCAPTCHA si no se ha hecho
-function abrirModalLogin() {
-    const modal = document.getElementById('modal-login');
-    modal.style.display = 'flex';
-
-    if (!recaptchaWidgetId) {
-        recaptchaWidgetId = grecaptcha.render('recaptcha-container', {
-            'sitekey': '6LcH8CUsAAAAADZ49CVB5T1W9_Z4AiYElGbbqkeU'
-        });
-    }
-}
-
-// Cerrar modal
-function cerrarModalLogin() {
-    const modal = document.getElementById('modal-login');
-    modal.style.display = 'none';
-}
-</script>
 
 </body>
 </html>
