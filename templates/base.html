@@ -30,9 +30,18 @@
             border-radius: 0.75rem 0 0 0.75rem;
             z-index: 50;
         }
-        #accesibilidad-panel button { cursor: pointer; }
-        #accesibilidad-options { display: none; flex-direction: column; gap: 0.5rem; padding: 0.75rem; }
-        #accesibilidad-options.show { display: flex; }
+        #accesibilidad-panel button {
+            cursor: pointer;
+        }
+        #accesibilidad-options {
+            display: none;
+            flex-direction: column;
+            gap: 0.5rem;
+            padding: 0.75rem;
+        }
+        #accesibilidad-options.show {
+            display: flex;
+        }
 
         /* MODOS ACCESIBILIDAD */
         .grayscale { filter: grayscale(100%); }
@@ -40,16 +49,18 @@
         .large-cursor * { cursor: pointer !important; }
         .pointer-reader * { outline: 2px solid orange !important; }
         .night-mode { background-color: #111 !important; color: #eee !important; }
-
-        /* MENÚ MÓVIL */
-        .nav-links-mobile.active { display: flex; }
     </style>
 </head>
+
 <body class="bg-white text-gray-900 font-sans transition-all duration-300">
 
 <!-- NAVBAR PRINCIPAL -->
 <header class="navbar flex justify-between items-center px-6 py-4 bg-white shadow-md">
-    <a href="{{ url_for('index') }}" class="logo flex items-center text-2xl font-bold">👟 <span class="ml-2">SneakersMX</span></a>
+
+    <!-- LOGO -->
+    <a href="{{ url_for('index') }}" class="logo flex items-center text-2xl font-bold">
+        👟 <span class="ml-2">SneakersMX</span>
+    </a>
 
     <!-- MENÚ ESCRITORIO -->
     <nav class="nav-links hidden md:flex gap-8 text-lg">
@@ -65,6 +76,7 @@
         {% else %}
             <div id="btnUsuario" class="cursor-pointer text-2xl"><i class="fas fa-user"></i></div>
         {% endif %}
+
         <a href="{{ url_for('carrito') }}" class="text-2xl hover:text-orange-500 transition">🛒</a>
 
         <!-- Menú móvil -->
@@ -135,13 +147,13 @@
 </div>
 
 <script>
-document.addEventListener("DOMContentLoaded", () => {
-    // MENÚ MÓVIL
-    const menuToggle = document.getElementById("menu-toggle");
-    const navMobile = document.querySelector(".nav-links-mobile");
-    menuToggle?.addEventListener("click", () => navMobile.classList.toggle("active"));
+// MENÚ MÓVIL
+document.getElementById("menu-toggle")?.addEventListener("click", () => {
+    document.querySelector(".nav-links-mobile").classList.toggle("active");
+});
 
-    // ACCESIBILIDAD
+// ACCESIBILIDAD
+document.addEventListener("DOMContentLoaded", () => {
     const toggleBtn = document.getElementById('accesibilidad-toggle');
     const options = document.getElementById('accesibilidad-options');
     toggleBtn.addEventListener('click', () => options.classList.toggle('show'));
@@ -165,60 +177,62 @@ document.addEventListener("DOMContentLoaded", () => {
     window.increaseCursor = () => document.body.classList.toggle('large-cursor');
     window.togglePointer = () => document.body.classList.toggle('pointer-reader');
     window.toggleNightMode = () => document.body.classList.toggle('night-mode');
-
-    // LOGIN
-    const btnUsuario = document.getElementById("btnUsuario");
-    const modalLogin = document.getElementById("modalLogin");
-    const cerrar = document.querySelector(".cerrar-modal");
-    btnUsuario?.addEventListener("click", () => modalLogin.classList.remove("hidden"));
-    cerrar.addEventListener("click", () => modalLogin.classList.add("hidden"));
-    window.addEventListener("click", e => { if(e.target === modalLogin) modalLogin.classList.add("hidden"); });
-
-    // CHAT BOT
-    const chatBubble = document.getElementById("chat-bubble");
-    const chatbox = document.getElementById("chatbox");
-    const closeBtn = document.getElementById("close-chat");
-    chatBubble.addEventListener("click", () => {
-        chatbox.classList.toggle("hidden");
-        setTimeout(() => chatbox.classList.toggle("scale-0"), 10);
-    });
-    closeBtn.addEventListener("click", () => {
-        chatbox.classList.add("scale-0");
-        setTimeout(() => chatbox.classList.add("hidden"), 300);
-    });
-
-    async function sendOption(option) {
-        const messagesDiv = document.getElementById("messages");
-        messagesDiv.innerHTML += `<div class="text-right"><span class="inline-block bg-orange-100 text-orange-800 px-3 py-1 rounded-lg">${option}</span></div>`;
-        document.getElementById("options").innerHTML = "";
-
-        const res = await fetch("/api/chatbot", {
-            method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({option})
-        });
-        const data = await res.json();
-        messagesDiv.innerHTML += `<div class="text-left"><span class="inline-block bg-orange-500 text-white px-3 py-1 rounded-lg">${data.reply}</span></div>`;
-        messagesDiv.scrollTop = messagesDiv.scrollHeight;
-
-        if (data.options) showOptions(data.options);
-    }
-
-    function showOptions(options) {
-        const optionsDiv = document.getElementById("options");
-        optionsDiv.innerHTML = "";
-        options.forEach(opt => {
-            const btn = document.createElement("button");
-            btn.textContent = opt;
-            btn.className = "bg-gradient-to-br from-orange-400 to-red-400 text-white px-3 py-1 rounded-full hover:from-orange-500 hover:to-red-500 transition-transform hover:scale-105";
-            btn.onclick = () => sendOption(opt);
-            optionsDiv.appendChild(btn);
-        });
-    }
-
-    // Inicia menú principal
-    showOptions(["Precios", "Envíos", "Métodos de pago", "Disponibilidad", "Productos destacados"]);
 });
+
+// BOTÓN LOGIN
+const btnUsuario = document.getElementById("btnUsuario");
+const modalLogin = document.getElementById("modalLogin");
+const cerrar = document.querySelector(".cerrar-modal");
+
+btnUsuario?.addEventListener("click", () => { modalLogin.classList.remove("hidden"); });
+cerrar.addEventListener("click", () => { modalLogin.classList.add("hidden"); });
+window.addEventListener("click", (e) => { if (e.target === modalLogin) modalLogin.classList.add("hidden"); });
+
+// CHAT BOT
+const chatBubble = document.getElementById("chat-bubble");
+const chatbox = document.getElementById("chatbox");
+const closeBtn = document.getElementById("close-chat");
+
+chatBubble.addEventListener("click", () => {
+    chatbox.classList.toggle("hidden");
+    setTimeout(() => chatbox.classList.toggle("scale-0"), 10);
+});
+closeBtn.addEventListener("click", () => {
+    chatbox.classList.add("scale-0");
+    setTimeout(() => chatbox.classList.add("hidden"), 300);
+});
+
+async function sendOption(option) {
+    const messagesDiv = document.getElementById("messages");
+    messagesDiv.innerHTML += `<div class="text-right"><span class="inline-block bg-orange-100 text-orange-800 px-3 py-1 rounded-lg">${option}</span></div>`;
+    document.getElementById("options").innerHTML = "";
+
+    const res = await fetch("/api/chatbot", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({option})
+    });
+    const data = await res.json();
+    messagesDiv.innerHTML += `<div class="text-left"><span class="inline-block bg-orange-500 text-white px-3 py-1 rounded-lg">${data.reply}</span></div>`;
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+    if (data.options) showOptions(data.options);
+}
+
+function showOptions(options) {
+    const optionsDiv = document.getElementById("options");
+    optionsDiv.innerHTML = "";
+    options.forEach(opt => {
+        const btn = document.createElement("button");
+        btn.textContent = opt;
+        btn.className = "bg-gradient-to-br from-orange-400 to-red-400 text-white px-3 py-1 rounded-full hover:from-orange-500 hover:to-red-500 transition-transform hover:scale-105";
+        btn.onclick = () => sendOption(opt);
+        optionsDiv.appendChild(btn);
+    });
+}
+
+// Inicia menú principal
+showOptions(["Precios", "Envíos", "Métodos de pago", "Disponibilidad", "Productos destacados"]);
 </script>
 
 </body>
