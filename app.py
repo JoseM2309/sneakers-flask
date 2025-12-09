@@ -84,13 +84,40 @@ def load_user(user_id):
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     print("📩 Entrando a /login")
+    recaptcha_secret_key = "6LcH8CUsAAAAACWvVURLaTuluhccnFkGH8Tf7c_-"
 
     if request.method == 'POST':
         email = request.form.get('email')
         password = request.form.get('password')
+        token = request.form.get('g-recaptcha-response')  # <-- Captura token
 
         print("Email recibido:", email)
         print("Password recibido:", password)
+        print("Token reCAPTCHA:", token)
+
+        
+        # Verificar reCAPTCHA
+        if not token:
+            flash("Por favor, verifica el reCAPTCHA.", "error")
+            return redirect(url_for('login'))
+
+        try:
+            response = requests.post(
+                "https://www.google.com/recaptcha/api/siteverify",
+                data={"secret": recaptcha_secret_key, "response": token},
+                timeout=5
+            )
+            result = response.json()
+            print("Resultado reCAPTCHA:", result)
+        except Exception as e:
+            print("Error reCAPTCHA:", e)
+            flash("Error al verificar reCAPTCHA. Intenta de nuevo.", "error")
+            return redirect(url_for('login'))
+
+        if not result.get("success"):
+            flash("reCAPTCHA no verificado. Intenta de nuevo.", "error")
+            return redirect(url_for('login'))
+
 
         if not email or not password:
             flash("Correo o contraseña incorrectos.", "error")
