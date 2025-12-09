@@ -6,6 +6,8 @@
 
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+ <!-- reCAPTCHA v2 -->
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 
     <style>
         body {
@@ -112,6 +114,9 @@
             <input type="email" name="email" placeholder="Correo electrónico" required>
             <input type="password" name="password" placeholder="Contraseña" required>
 
+            <!-- reCAPTCHA v2 -->
+            <div class="g-recaptcha" data-sitekey="TU_SITE_KEY"></div>
+            
             <button type="submit">Entrar</button>
 
         </form>
